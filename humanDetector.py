@@ -1,12 +1,15 @@
-from NatureRemoController import NatureRemoController
-import darknet
+import myToken
+from applianceController.method1_Login.NatureRemoController import NatureRemoController
+from darknet import darknet
 import argparse
 import os
 import random
 import time
 import cv2
-import sys
-sys.path.insert(1, '/home/ailab/yolo/darknet/')
+
+# darknetのディレクトリに移動する
+darknetDir = os.path.dirname(os.path.abspath(__file__)) + "/darknet"
+os.chdir(darknetDir)
 
 
 def parser():
@@ -15,7 +18,7 @@ def parser():
                         help="video source. If empty, uses webcam 0 stream")
     parser.add_argument("--out_filename", type=str, default="",
                         help="inference video name. Not saved if empty")
-    parser.add_argument("--weights", default="yolov4-tiny.weights",
+    parser.add_argument("--weights", default="./yolov4-tiny.weights",
                         help="yolo weights path")
     parser.add_argument("--dont_show", action='store_true',
                         help="windown inference display. For headless systems")
@@ -97,11 +100,11 @@ def video_cap():
     start_time = time.time()
 
     bIllumination = False
-    remo = NatureRemoController('Remo')
+    remo = NatureRemoController('Remo', myToken.default)
     noPersonCnt = 0
 
     while capflag:
-        #print("Start")
+        # print("Start")
         end_time = time.time()
         fps = 1/(end_time - start_time)
         start_time = end_time
@@ -119,6 +122,7 @@ def video_cap():
         #darknet.print_detections(detections, args.ext_output)
 
         if isPerson(detections) > 0:
+            noPersonCnt = 0
             if not bIllumination:
                 bIllumination = True
                 remo.sendOnSignalAilab('ailabキッチン照明')
@@ -142,9 +146,9 @@ def video_cap():
                 cv2.imshow('Inference', image)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
-                   print("push q")
-                   capflag = False
-                   break
+                    print("push q")
+                    capflag = False
+                    break
 
         except:
             print("except break")
