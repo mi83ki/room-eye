@@ -349,3 +349,43 @@ USBカメラを抜き差しすると、解決。
         cap.release()
         cv2.destroyAllWindows()
     ```
+
+### VMware Ubuntu 20.04 でmediapipeを利用
+
+参考にしたURL：<https://nullpo24.hatenablog.com/entry/2021/05/15/215427>
+
+1. mediapipeをインストールする
+
+    ```bash
+    pip install mediapipe
+    ```
+
+2. protobufを3.20.X以下にしないとmediapipeをインポートできなかったため、ダウングレードする
+
+    ```bash
+    pip install protobuf==3.20.1
+    ```
+
+3. USBカメラの認識確認
+    - 以下のコマンドで「/dev/video0」があればOK
+
+        ```bash
+        ls /dev/video*
+        ```
+
+    - 以下のコマンドでカメラ画像をチェックする
+
+        ```bash
+        cheese
+        ```
+
+    - VMwareでUbuntu20.04の環境を構築している場合にUSBカメラがうまく認識できなかったが、仮想マシン設定→USBコントローラ→USBの互換性を「USB 3.1」に変更して再起動することで認識できた。
+
+4. サンプルコードを実行する
+    - [Kazuhito00](https://github.com/Kazuhito00/mediapipe-python-sample)さんのサンプルコードを利用させていただいた。
+
+        ```bash
+        git clone https://github.com/Kazuhito00/mediapipe-python-sample
+        cd mediapipe-python-sample
+        python3 sample_pose.py
+        ```
