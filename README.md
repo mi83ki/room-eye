@@ -16,6 +16,14 @@
 1. Jetson Nano 2GB
 1. USBカメラ
 
+## インストール手順
+
+1. サブモジュールをチェックアウトする
+
+    ```bash
+    git submodule update --init
+    ```
+
 ## やったこと
 
 ### Jetson NanoでYolo V4を使用する
@@ -389,3 +397,101 @@ USBカメラを抜き差しすると、解決。
         cd mediapipe-python-sample
         python3 sample_pose.py
         ```
+
+### Jetson Nanoでmediapipeを動かす
+
+参考にしたサイト
+<https://dev.classmethod.jp/articles/mediapipe-install-on-jetson-nano-with-cpu-gpu/>
+
+1. 前準備
+
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo reboot
+    ```
+
+2. MediaPipeをインストール
+
+    ```bash
+    cd ~
+    git clone https://github.com/google/mediapipe.git
+    cd ~/mediapipe
+    chmod +x setup_opencv.sh
+    ```
+
+3. Bazelインストール
+
+    ```bash
+    sudo apt install build-essential openjdk-8-jdk python zip unzip
+    sudo apt install apt-transport-https curl gnupg
+
+    git clone https://github.com/PINTO0309/Bazel_bin.git
+    cd Bazel_bin/3.7.2/aarch64
+    cd Bazel_bin/2.0.0/Ubuntu1804_JetsonNano_aarch64/openjdk-8-jdk/
+    ./install.sh
+
+    mkdir bazel
+    cd bazel
+    wget https://github.com/bazelbuild/bazel/releases/download/3.7.2/bazel-3.7.2-dist.zip
+    unzip bazel-3.7.2-dist.zip
+    env EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
+    ```
+
+これではうまく行かなかった。
+
+参考にしたサイト
+
+- YouTube動画：<https://www.youtube.com/watch?v=ij9bIET4rCU>
+- テキストファイル：<https://github.com/feitgemel/Jetson-Nano-Python/blob/master/Install-MediaPipe/How%20to%20Install%20MediaPipe%20on%20jetson-nano%202022.txt>
+
+1. Swapがない場合は追加する
+
+    ```bash
+    ```
+
+2. 各種パッケージのインストール
+
+    ```bash
+    pip sinstall
+    sudo apt install python3-pip
+    sudo pip3 install -U pip testresources setuptools==49.6.0
+    sudo apt install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran
+    sudo pip3 install -U --no-deps numpy==1.19.4 future==0.18.2 mock==3.0.5 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 protobuf pybind11 cython pkgconfig
+    sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
+    sudo apt-get install python3-opencv
+    ```
+
+3. mediapipeのインストール
+
+    ```bash
+    git clone https://github.com/google/mediapipe.git
+    cd mediapipe
+    sudo apt-get install -y libopencv-core-dev  libopencv-highgui-dev libopencv-calib3d-dev libopencv-features2d-dev libopencv-imgproc-dev libopencv-video-dev
+    sudo chmod 744 setup_opencv.sh
+    ./setup_opencv.sh
+    ```
+
+4. 最後のステップ
+
+    ```bash
+    sudo pip3 install opencv_contrib_python
+    git clone https://github.com/PINTO0309/mediapipe-bin
+    cd mediapipe-bin
+
+    sudo apt install curl
+
+    sudo chmod +x ./v0.8.5/download.sh && ./v0.8.5/download.sh
+    unzip v0.8.5.zip
+    cd v0.8.5/numpy119x/py36/
+    sudo pip3 install ./mediapipe-0.8.5_cuda102-cp36-cp36m-linux_aarch64.whl
+    ```
+
+5. デモの実行
+
+    ```bash
+    git clone https://github.com/feitgemel/BodyPos.git
+    cd BodyPos
+    cd MediaPipe
+    cd Demo
+    python3 MediaPipe-Holistic.py
+    ```
