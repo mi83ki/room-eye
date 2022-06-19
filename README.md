@@ -439,7 +439,7 @@ USBカメラを抜き差しすると、解決。
 
 これではうまく行かなかった。
 
-参考にしたサイト
+次に参考にしたサイト
 
 - YouTube動画：<https://www.youtube.com/watch?v=ij9bIET4rCU>
 - テキストファイル：<https://github.com/feitgemel/Jetson-Nano-Python/blob/master/Install-MediaPipe/How%20to%20Install%20MediaPipe%20on%20jetson-nano%202022.txt>
@@ -461,7 +461,7 @@ USBカメラを抜き差しすると、解決。
     sudo apt-get install python3-opencv
     ```
 
-3. mediapipeのインストール
+3. opencvのセットアップ
 
     ```bash
     git clone https://github.com/google/mediapipe.git
@@ -471,7 +471,7 @@ USBカメラを抜き差しすると、解決。
     ./setup_opencv.sh
     ```
 
-4. 最後のステップ
+4. mediapipeのインストール
 
     ```bash
     sudo pip3 install opencv_contrib_python
@@ -484,6 +484,21 @@ USBカメラを抜き差しすると、解決。
     unzip v0.8.5.zip
     cd v0.8.5/numpy119x/py36/
     sudo pip3 install ./mediapipe-0.8.5_cuda102-cp36-cp36m-linux_aarch64.whl
+
+    pip3 install dataclasses
+    ```
+
+    上記手順だとnumpyがインストールできなかったので以下のURLからダウンロード
+    <https://drive.google.com/file/d/1lHr9Krznst1ugLF_ElWGCNi_Y4AmEexx/view?usp=sharing>
+
+    - 参考にしたサイト：<https://github.com/Melvinsajith/How-to-Install-Mediapipe-in-Jetson-Nano>
+
+    ```bash
+    mv ~/Downloads/mediapipe-bin.zip ~/mediapipe
+    cd mediapipe
+    unzip mediapipe-bin.zip
+    cd mediapipe
+    sudo pip3 install numpy-1.19.4-cp36-none-manylinux2014_aarch64.whl
     ```
 
 5. デモの実行
