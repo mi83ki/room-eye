@@ -510,3 +510,59 @@ USBカメラを抜き差しすると、解決。
     cd Demo
     python3 MediaPipe-Holistic.py
     ```
+
+### 寝ころび検知
+
+mediapipeを用いて寝ころび検知を行う。
+
+#### ランドマーク
+
+mediapipeで検出したランドマークを活用する。
+今回はresults.pose_landmarksを利用する。
+
+姿勢のランドマークは以下のインデックスで取得できる。
+画像取得元URL：<https://google.github.io/mediapipe/solutions/pose.html>
+
+![pose_landmarks](image/pose_tracking_full_body_landmarks.png)
+
+#### 寝ころび検知アルゴリズム
+
+右肩と右腰を繋いだ線が45°よりも水平　かつ　左肩と左腰を繋いだ線が45°よりも水平
+の場合に寝ころびと判定する
+
+#### サンプルプログラム
+
+```python
+def isLieDown(pose_landmarks):
+    if pose_landmarks == None:
+        return False
+
+    landmarkRightShoulder = None
+    landmarkLeftShoulder = None
+    landmarkRightHip = None
+    landmarkLeftHip = None
+    for index, landmark in enumerate(pose_landmarks.landmark):
+        if index == 11:  # 右肩
+        landmarkRightShoulder = landmark
+        if index == 12:  # 左肩
+        landmarkLeftShoulder = landmark
+        if index == 23:  # 腰(右側)
+        landmarkRightHip = landmark
+        if index == 24:  # 腰(左側)
+        landmarkLeftHip = landmark
+
+    lieDownR = False
+    lieDownL = False
+    if landmarkRightShoulder != None and landmarkRightHip != None:
+        xdefR = abs(landmarkRightShoulder.x - landmarkRightHip.x)
+        ydefR = abs(landmarkRightShoulder.y - landmarkRightHip.y)
+        if xdefR > ydefR:
+        lieDownR = True
+
+    if landmarkLeftShoulder != None and landmarkLeftHip != None:
+        xdefL = abs(landmarkLeftShoulder.x - landmarkLeftHip.x)
+        ydefL = abs(landmarkLeftShoulder.y - landmarkLeftHip.y)
+        if xdefL > ydefL:
+        lieDownL = True
+    return lieDownR and lieDownL
+```
