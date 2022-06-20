@@ -68,7 +68,7 @@ def set_saved_video(input_video, output_video, size):
 
 
 def image_detection(image, network, class_names, class_colors, thresh, width, height):
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image_rgb = cv2.cvtColor(cv2.flip(image, -1), cv2.COLOR_BGR2RGB)
     image_resized = cv2.resize(image_rgb, (width, height),
                                interpolation=cv2.INTER_LINEAR)
 

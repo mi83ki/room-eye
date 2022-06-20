@@ -82,7 +82,8 @@ class LieDownDetector:
           self.__lieDownCnt += 1
           if self.__lieDownCnt >= 10:
             print("Lie down !!")
-            self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
+            #self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
+            self.__remo.sendOffSignal('書斎')
             self.__bIllumination = False
             self.__lieDownCnt = 0
           else:
@@ -93,7 +94,8 @@ class LieDownDetector:
         self.__noPersonCnt += 1
         if self.__noPersonCnt >= 10:
           print("Light Off!!")
-          self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
+          #self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
+          self.__remo.sendOffSignal('書斎')
           self.__bIllumination = False
           self.__noPersonCnt = 0
         else:
@@ -104,7 +106,8 @@ class LieDownDetector:
           self.__personCnt += 1
           if self.__personCnt >= 10:
             print("Light On!!")
-            self.__remo.sendOnSignalAilab('ailabキッチン照明')
+            #self.__remo.sendOnSignalAilab('ailabキッチン照明')
+            self.__remo.sendOnSignal('書斎')
             self.__bIllumination = True
             self.__personCnt = 0
           else:
@@ -118,7 +121,7 @@ if __name__ == "__main__":
   mp_holistic = mp.solutions.holistic
 
   cap = cv2.VideoCapture(0)
-  cvFpsCalc = CvFpsCalc(buffer_len=10)
+  cvFpsCalc = CvFpsCalc(buffer_len=1)
   with mp_holistic.Holistic(
           min_detection_confidence=0.5,
           min_tracking_confidence=0.5) as holistic:
@@ -135,7 +138,7 @@ if __name__ == "__main__":
 
       # Flip the image horizontally for a later selfie-view display, and convert
       # the BGR image to RGB.
-      image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+      image = cv2.cvtColor(cv2.flip(image, -1), cv2.COLOR_BGR2RGB)
       # To improve performance, optionally mark the image as not writeable to
       # pass by reference.
       image.flags.writeable = False
