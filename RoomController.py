@@ -16,6 +16,7 @@ import time
 class RoomController:
   def __init__(self) -> None:
     self.__cap = cv2.VideoCapture(0)
+    self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)    # カメラバッファを1にすることでレスポンスを上げる
     self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
     self.__lieDownDetector = LieDownDetector()
 
@@ -92,6 +93,10 @@ class RoomController:
       cv2.imshow('MediaPipe Holistic', image)
       if cv2.waitKey(5) & 0xFF == 27:
         break
+
+      # 省エネのためスリープを入れる
+      time.sleep(0.4)
+
     self.__cap.release()
 
 
