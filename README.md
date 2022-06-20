@@ -471,6 +471,8 @@ USBカメラを抜き差しすると、解決。
     ./setup_opencv.sh
     ```
 
+    JetsonNano 2GBでは3時間程度かかりました。
+
 4. mediapipeのインストール
 
     ```bash
@@ -543,13 +545,13 @@ def isLieDown(pose_landmarks):
     landmarkLeftHip = None
     for index, landmark in enumerate(pose_landmarks.landmark):
         if index == 11:  # 右肩
-        landmarkRightShoulder = landmark
+            landmarkRightShoulder = landmark
         if index == 12:  # 左肩
-        landmarkLeftShoulder = landmark
+            landmarkLeftShoulder = landmark
         if index == 23:  # 腰(右側)
-        landmarkRightHip = landmark
+            landmarkRightHip = landmark
         if index == 24:  # 腰(左側)
-        landmarkLeftHip = landmark
+            landmarkLeftHip = landmark
 
     lieDownR = False
     lieDownL = False
@@ -557,12 +559,12 @@ def isLieDown(pose_landmarks):
         xdefR = abs(landmarkRightShoulder.x - landmarkRightHip.x)
         ydefR = abs(landmarkRightShoulder.y - landmarkRightHip.y)
         if xdefR > ydefR:
-        lieDownR = True
+            lieDownR = True
 
     if landmarkLeftShoulder != None and landmarkLeftHip != None:
         xdefL = abs(landmarkLeftShoulder.x - landmarkLeftHip.x)
         ydefL = abs(landmarkLeftShoulder.y - landmarkLeftHip.y)
         if xdefL > ydefL:
-        lieDownL = True
+            lieDownL = True
     return lieDownR and lieDownL
 ```
