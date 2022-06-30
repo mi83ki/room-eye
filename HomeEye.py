@@ -20,7 +20,7 @@ LIE_DOWN_CNT_THREASHOLD = 3
 # 人がいなくなったと判定する繰り返し回数
 NO_PERSON_CNT_THREASHOLD = 20
 
-class RoomController:
+class HomeEye:
   def __init__(self) -> None:
     self.__humanDetector = HumanDetector()
     self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
@@ -110,5 +110,5 @@ class RoomController:
 
 
 if __name__ == "__main__":
-  roomController = RoomController()
-  roomController.run()
+  HomeEye = HomeEye()
+  HomeEye.run()
