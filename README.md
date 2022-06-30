@@ -568,3 +568,35 @@ def isLieDown(pose_landmarks):
             lieDownL = True
     return lieDownR and lieDownL
 ```
+
+## モジュール構造図
+
+```puml
+@startuml {moduleStructure.png}
+
+'メイン
+rectangle "<b>HomeEye.py\nHomeEyeメイン" as homeeye
+rectangle "<b>cv2.py\nOpenCVライブラリ" as cv2
+rectangle "<b>HumanDetector.py\n人検知モジュール" as human
+rectangle "<b>LieDownDetector.py\n寝ころび検知モジュール" as liedown
+rectangle "<b>NatureRemoController.py\nNatureRemo制御モジュール" as natureremo
+
+homeeye <-down-- cv2 : 画像
+homeeye -down--> human : 画像
+homeeye <-down-- human : 人検知
+homeeye -down--> liedown : 画像
+homeeye <-down-- liedown : 寝ころび検知
+homeeye -down--> natureremo : 照明ON/OFF
+
+'人検知モジュール
+rectangle "<b>darknet.py\nyoloライブラリ" as darknet
+human -down-> darknet : 画像
+human <-down- darknet : 物体検知
+
+'寝ころび検知モジュール
+rectangle "<b>mediapipe.py\nmediapipeライブラリ" as mediapipe
+liedown -down-> mediapipe : 画像
+liedown <-down- mediapipe : 骨格検知
+
+@enduml
+```
