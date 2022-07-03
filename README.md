@@ -1,4 +1,4 @@
-# human-detector
+# RoomEye
 
 人を検知して家電を操作するアプリ
 
