@@ -569,6 +569,20 @@ def isLieDown(pose_landmarks):
     return lieDownR and lieDownL
 ```
 
+### 環境変数の設定
+
+- python-dotenvのインストール
+
+    ```bash
+    pip install python-dotenv
+    ```
+
+- .envファイルの作成
+
+    ```env
+    NATURE_REMO_TOKEN="XXXXXXXXXXXXXXX Your Token XXXXXXXXXXXXXXXXX"
+    ```
+
 ## モジュール構造図
 
 ```puml
