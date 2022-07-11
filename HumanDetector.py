@@ -1,14 +1,14 @@
 from darknet import darknet
 import argparse
 import os
-import random
-import time
 import cv2
 
-DETECT_THREASHOLD = 0.5
-
+import config
 
 class HumanDetector:
+  """
+  人検知判定クラス
+  """
 
   def __init__(self) -> None:
     # darknetのディレクトリに移動する
@@ -95,7 +95,7 @@ class HumanDetector:
     personCnt = 0
     for label, confidence, bbox in self.__detections:
       if label == "person":
-        if float(confidence) > DETECT_THREASHOLD:
+        if float(confidence) > config.DETECT_THREASHOLD:
           personCnt += 1
     return personCnt
 

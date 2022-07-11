@@ -1,24 +1,13 @@
 import cv2
-from HumanDetector import HumanDetector
+import os
+import time
 from dotenv import load_dotenv
 
+import config
+from HumanDetector import HumanDetector
 from applianceController.method1_Login.NatureRemoController import NatureRemoController
-
 from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
-
-from darknet import darknet
-import argparse
-import os
-import random
-import time
-
-# 人を検知したと判定する繰り返し回数
-PERSON_CNT_THREASHOLD = 3
-# 寝ころんだと判定する繰り返し回数
-LIE_DOWN_CNT_THREASHOLD = 3
-# 人がいなくなったと判定する繰り返し回数
-NO_PERSON_CNT_THREASHOLD = 20
 
 class HomeEye:
   def __init__(self) -> None:
@@ -38,6 +27,7 @@ class HomeEye:
     self.__lieDownCnt = 0
     self.__personCnt = 0
     self.__noPersonCnt = 0
+    self.__noPersonStart = 0
 
   def lightOn(self):
     # self.__remo.sendOnSignalAilab(self.__ROOM_LIGHT_NAME)
@@ -53,7 +43,7 @@ class HomeEye:
         self.__noPersonCnt = 0
         if self.__lieDownDetector.isLieDown():
           self.__lieDownCnt += 1
-          if self.__lieDownCnt >= LIE_DOWN_CNT_THREASHOLD:
+          if self.__lieDownCnt >= config.LIE_DOWN_CNT_THREASHOLD:
             print("Lie down !!")
             self.lightOff()
             self.__bIllumination = False
@@ -63,19 +53,21 @@ class HomeEye:
         else:
           self.__lieDownCnt = 0
       else:
+        if self.__noPersonCnt == 0:
+          self.__noPersonStart = time.time()
         self.__noPersonCnt += 1
-        if self.__noPersonCnt >= NO_PERSON_CNT_THREASHOLD:
+        if time.time() - self.__noPersonStart >= config.NO_PERSON_TIME_THREASHOLD:
           print("Light Off!!")
           self.lightOff()
           self.__bIllumination = False
           self.__noPersonCnt = 0
         else:
-          print("noPersonCnt = " + str(self.__noPersonCnt))
+          print("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
     else:
       if self.__humanDetector.isPerson() > 0 or self.__lieDownDetector.isPerson():
         if not self.__lieDownDetector.isLieDown():
           self.__personCnt += 1
-          if self.__personCnt >= PERSON_CNT_THREASHOLD:
+          if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
             print("Light On!!")
             self.lightOn()
             self.__bIllumination = True

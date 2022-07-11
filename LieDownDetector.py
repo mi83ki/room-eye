@@ -3,6 +3,10 @@ import mediapipe as mp
 
 
 class LieDownDetector:
+  """
+  寝ころび検知クラス
+  """
+
   def __init__(self) -> None:
 
     self.__mpDrawing = mp.solutions.drawing_utils
