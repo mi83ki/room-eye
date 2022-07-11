@@ -1,8 +1,8 @@
 import cv2
 from HumanDetector import HumanDetector
+from dotenv import load_dotenv
 
 from applianceController.method1_Login.NatureRemoController import NatureRemoController
-import myToken
 
 from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
@@ -28,12 +28,24 @@ class HomeEye:
     self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
     self.__lieDownDetector = LieDownDetector()
 
+    # 環境変数を読み込む
+    load_dotenv()
+    self.__NATURE_REMO_TOKEN = os.environ.get("NATURE_REMO_TOKEN", "XXXXXXXXXXX Your Nature Remo Token XXXXXXXXXX")
+    self.__ROOM_LIGHT_NAME = os.environ.get("ROOM_LIGHT_NAME", "Your Light Name")
     # NatureRemoに接続
-    self.__remo = NatureRemoController('Remo', myToken.default)
+    self.__remo = NatureRemoController('Remo', self.__NATURE_REMO_TOKEN)
     self.__bIllumination = False
     self.__lieDownCnt = 0
     self.__personCnt = 0
     self.__noPersonCnt = 0
+
+  def lightOn(self):
+    # self.__remo.sendOnSignalAilab(self.__ROOM_LIGHT_NAME)
+    self.__remo.sendOnSignal(self.__ROOM_LIGHT_NAME)
+
+  def lightOff(self):
+    # self.__remo.sendOffSignalAilab(self.__ROOM_LIGHT_NAME, 2)
+    self.__remo.sendOffSignal(self.__ROOM_LIGHT_NAME)
 
   def applianceControl(self):
     if self.__bIllumination:
@@ -43,8 +55,7 @@ class HomeEye:
           self.__lieDownCnt += 1
           if self.__lieDownCnt >= LIE_DOWN_CNT_THREASHOLD:
             print("Lie down !!")
-            #self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
-            self.__remo.sendOffSignal('書斎')
+            self.lightOff()
             self.__bIllumination = False
             self.__lieDownCnt = 0
           else:
@@ -55,8 +66,7 @@ class HomeEye:
         self.__noPersonCnt += 1
         if self.__noPersonCnt >= NO_PERSON_CNT_THREASHOLD:
           print("Light Off!!")
-          #self.__remo.sendOffSignalAilab('ailabキッチン照明', 2)
-          self.__remo.sendOffSignal('書斎')
+          self.lightOff()
           self.__bIllumination = False
           self.__noPersonCnt = 0
         else:
@@ -67,8 +77,7 @@ class HomeEye:
           self.__personCnt += 1
           if self.__personCnt >= PERSON_CNT_THREASHOLD:
             print("Light On!!")
-            # self.__remo.sendOnSignalAilab('ailabキッチン照明')
-            self.__remo.sendOnSignal('書斎')
+            self.lightOn()
             self.__bIllumination = True
             self.__personCnt = 0
           else:
