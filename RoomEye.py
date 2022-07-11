@@ -9,7 +9,7 @@ from applianceController.method1_Login.NatureRemoController import NatureRemoCon
 from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
 
-class HomeEye:
+class RoomEye:
   def __init__(self) -> None:
     self.__humanDetector = HumanDetector()
     self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
@@ -111,5 +111,5 @@ class HomeEye:
 
 
 if __name__ == "__main__":
-  HomeEye = HomeEye()
-  HomeEye.run()
+  RoomEye = RoomEye()
+  RoomEye.run()
