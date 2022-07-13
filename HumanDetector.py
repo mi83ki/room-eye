@@ -80,6 +80,16 @@ class HumanDetector:
     video = cv2.VideoWriter(output_video, fourcc, fps, size)
     return video
 
+  def getImages(self, image, detections, _label):
+    images = []
+    for label, confidence, bbox in detections:
+      if label == _label:
+        x, y, w, h = bbox
+        print(bbox)
+        img = image[y: y + h, x: x + w]
+        images.append(img)
+    return images
+
   def image_detection(self, image, network, class_names, class_colors, thresh, width, height):
     image_rgb = cv2.cvtColor(cv2.flip(image, -1), cv2.COLOR_BGR2RGB)
     image_resized = cv2.resize(image_rgb, (width, height),
