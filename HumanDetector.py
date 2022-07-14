@@ -23,9 +23,10 @@ class HumanDetector:
         self.__args.weights,
         batch_size=1
     )
-    self.__width = darknet.network_width(self.__network)
-    self.__height = darknet.network_height(self.__network)
-    self.__darknet_image = darknet.make_image(self.__width, self.__height, 3)
+    self.__darknetWidth = darknet.network_width(self.__network)
+    self.__darknetHeight = darknet.network_height(self.__network)
+    self.__darknet_image = darknet.make_image(self.__darknetWidth, self.__darknetHeight, 3)
+    self.__personImages = []
     print("HumanDetector start")
 
   def parser(self):
@@ -84,22 +85,49 @@ class HumanDetector:
     images = []
     for label, confidence, bbox in detections:
       if label == _label:
-        x, y, w, h = bbox
-        print(bbox)
-        img = image[y: y + h, x: x + w]
+        left, top, right, bottom = darknet.bbox2points(bbox)
+        img = image[top: bottom, left: right]
         images.append(img)
     return images
 
+  def convert2relative(self, bbox):
+    """
+    YOLO format use relative coordinates for annotation
+    """
+    x, y, w, h = bbox
+    _height = self.__darknetHeight
+    _width = self.__darknetWidth
+    return x / _width, y / _height, w / _width, h / _height
+
+  def convert2original(self, image, bbox):
+    x, y, w, h = self.convert2relative(bbox)
+
+    image_h, image_w, __ = image.shape
+
+    orig_x = int(x * image_w)
+    orig_y = int(y * image_h)
+    orig_width = int(w * image_w)
+    orig_height = int(h * image_h)
+
+    bbox_converted = (orig_x, orig_y, orig_width, orig_height)
+
+    return bbox_converted
+
   def image_detection(self, image, network, class_names, class_colors, thresh, width, height):
-    image_rgb = cv2.cvtColor(cv2.flip(image, -1), cv2.COLOR_BGR2RGB)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_resized = cv2.resize(image_rgb, (width, height),
                                interpolation=cv2.INTER_LINEAR)
 
     darknet.copy_image_from_bytes(self.__darknet_image, image_resized.tobytes())
     detections = darknet.detect_image(
         network, class_names, self.__darknet_image, thresh=thresh)
-    image = darknet.draw_boxes(detections, image_resized, class_colors)
-    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), detections
+    detections_adjusted = []
+    for label, confidence, bbox in detections:
+      bbox_adjusted = self.convert2original(image, bbox)
+      detections_adjusted.append((str(label), confidence, bbox_adjusted))
+    outImage = darknet.draw_boxes(detections_adjusted, image.copy(), class_colors)
+    personImages = self.getImages(image, detections_adjusted, "person")
+    return outImage, personImages, detections
 
   def isPerson(self):
     personCnt = 0
@@ -110,8 +138,7 @@ class HumanDetector:
     return personCnt
 
   def detect(self, flame):
-    image, self.__detections = self.image_detection(
-        flame, self.__network, self.__class_names, self.__class_colors, self.__args.thresh, self.__width, self.__height
+    image, personImages, self.__detections = self.image_detection(
+        flame, self.__network, self.__class_names, self.__class_colors, self.__args.thresh, self.__darknetWidth, self.__darknetHeight
     )
-    #darknet.print_detections(self.__detections, self.__args.ext_output)
-    return image
+    return image, personImages
