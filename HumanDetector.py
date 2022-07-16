@@ -2,6 +2,8 @@ from darknet import darknet
 import argparse
 import os
 import cv2
+import numpy as np
+import traceback
 
 import config
 
@@ -82,12 +84,16 @@ class HumanDetector:
     return video
 
   def getImages(self, image, detections, _label):
+    # 画像の大きさを取得
+    height, width = image.shape[:2]
     images = []
     for label, confidence, bbox in detections:
       if label == _label:
         left, top, right, bottom = darknet.bbox2points(bbox)
         img = image[top: bottom, left: right]
-        images.append(img)
+        blank = np.zeros((height, width, 3), np.uint8)
+        blank[top:bottom, left:right] = img
+        images.append(blank)
     return images
 
   def convert2relative(self, bbox):
