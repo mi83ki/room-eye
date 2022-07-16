@@ -44,9 +44,9 @@ class RoomEye:
 
   def applianceControl(self):
     if self.__bIllumination == self.LIGHT_ON:
-      if self.__humanDetector.isPerson() > 0:
+      if self.__humanDetector.isPerson() > 0 or self.__lieDownDetector.isPerson():
         self.__noPersonCnt = 0
-        if self.__lieDownDetector.isLieDown():
+        if self.__lieDownDetector.isLieDown() and not self.__lieDownDetector.isWakeUp():
           self.__lieDownCnt += 1
           if self.__lieDownCnt >= config.LIE_DOWN_CNT_THREASHOLD:
             print("Lie down !!")
@@ -70,7 +70,7 @@ class RoomEye:
           print("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
 
     elif self.__bIllumination == self.LIGHT_OFF:
-      if self.__humanDetector.isPerson() > 0:
+      if self.__humanDetector.isPerson() > 0 or self.__lieDownDetector.isPerson():
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
           print("Light On!!")

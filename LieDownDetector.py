@@ -24,6 +24,8 @@ class LieDownDetector:
   def isWakeUp(self):
     return self.__bWakeUp
 
+  def isPerson(self):
+    return self.__bLieDown or self.__bWakeUp
   def checkLieDown(self):
     if self.__results.pose_landmarks == None:
       return None
