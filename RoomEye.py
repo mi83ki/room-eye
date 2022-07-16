@@ -96,6 +96,7 @@ class RoomEye:
         self.__personCnt = 0
 
   def run(self):
+    mediapipeWindows = []
     while self.__cap.isOpened():
       display_fps = self.__cvFpsCalc.get()
       success, image = self.__cap.read()
@@ -117,8 +118,16 @@ class RoomEye:
       if len(personImages) == 0:
         personImages.append(image)
       images2 = self.__lieDownDetector.detects(personImages)
+      windows = []
       for index, img in enumerate(images2):
-        cv2.imshow('MediaPipe Holistic ' + str(index), img)
+        windowName = 'MediaPipe Holistic ' + str(index)
+        cv2.imshow(windowName, img)
+        windows.append(windowName)
+      # いらなくなったウインドウを閉じる
+      for window in mediapipeWindows:
+        if not window in windows:
+          cv2.destroyWindow(window)
+      mediapipeWindows = windows
 
       # 家電の操作
       self.applianceControl()
