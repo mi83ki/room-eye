@@ -1,6 +1,6 @@
 
 # 人検知を判定するしきい値
-DETECT_THREASHOLD = 0.5
+DETECT_THREASHOLD = 0.35
 
 # 人を検知したと判定する繰り返し回数
 PERSON_CNT_THREASHOLD = 1
