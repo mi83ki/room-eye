@@ -15,13 +15,18 @@ class LieDownDetector:
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5)
     self.__results = None
-
-  def isPerson(self):
-    return self.__results.pose_landmarks != None
+    self.__bLieDown = False
+    self.__bWakeUp = False
 
   def isLieDown(self):
+    return self.__bLieDown
+
+  def isWakeUp(self):
+    return self.__bWakeUp
+
+  def checkLieDown(self):
     if self.__results.pose_landmarks == None:
-      return False
+      return None
 
     landmarkRightShoulder = None
     landmarkLeftShoulder = None
@@ -36,6 +41,9 @@ class LieDownDetector:
         landmarkRightHip = landmark
       if index == 24:  # 腰(左側)
         landmarkLeftHip = landmark
+    
+    if landmarkRightShoulder == None or landmarkLeftShoulder == None or landmarkRightHip == None or landmarkLeftHip == None:
+      return None
 
     lieDownR = False
     lieDownL = False
@@ -58,7 +66,7 @@ class LieDownDetector:
   def detect(self, flame):
     # Flip the image horizontally for a later selfie-view display, and convert
     # the BGR image to RGB.
-    image = cv2.cvtColor(cv2.flip(flame, -1), cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(flame, cv2.COLOR_BGR2RGB)
 
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
@@ -78,3 +86,19 @@ class LieDownDetector:
         image, self.__results.pose_landmarks, self.__mpHolistic.POSE_CONNECTIONS)
 
     return image
+
+  def detects(self, flames):
+    if len(flames) == 0:
+      return []
+
+    self.__bLieDown = False
+    self.__bWakeUp = False
+    images = []
+    for flame in flames:
+      images.append(self.detect(flame))
+      checkLieDown = self.checkLieDown()
+      if checkLieDown == True:
+        self.__bLieDown = True
+      elif checkLieDown == False:
+        self.__bWakeUp = True
+    return images
