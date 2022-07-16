@@ -113,12 +113,12 @@ class RoomEye:
                   cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA)
       cv2.imshow('Inference', image1)
 
-      personImages.insert(0, image)
-      if len(personImages) > 0:
-        # 寝ころび検知
-        images2 = self.__lieDownDetector.detects(personImages)
-        for index, img in enumerate(images2):
-          cv2.imshow('MediaPipe Holistic ' + str(index), img)
+      # 寝ころび検知
+      if len(personImages) == 0:
+        personImages.append(image)
+      images2 = self.__lieDownDetector.detects(personImages)
+      for index, img in enumerate(images2):
+        cv2.imshow('MediaPipe Holistic ' + str(index), img)
 
       # 家電の操作
       self.applianceControl()
