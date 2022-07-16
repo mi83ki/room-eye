@@ -1,5 +1,8 @@
 import cv2
 import mediapipe as mp
+import math
+
+import config
 
 
 class LieDownDetector:
@@ -26,15 +29,13 @@ class LieDownDetector:
 
   def isPerson(self):
     return self.__bLieDown or self.__bWakeUp
-  def checkLieDown(self):
-    if self.__results.pose_landmarks == None:
-      return None
 
+  def calcBodyAngle(self, results):
     landmarkRightShoulder = None
     landmarkLeftShoulder = None
     landmarkRightHip = None
     landmarkLeftHip = None
-    for index, landmark in enumerate(self.__results.pose_landmarks.landmark):
+    for index, landmark in enumerate(results.pose_landmarks.landmark):
       if index == 11:  # 右肩
         landmarkRightShoulder = landmark
       if index == 12:  # 左肩
@@ -43,27 +44,33 @@ class LieDownDetector:
         landmarkRightHip = landmark
       if index == 24:  # 腰(左側)
         landmarkLeftHip = landmark
-    
-    if landmarkRightShoulder == None or landmarkLeftShoulder == None or landmarkRightHip == None or landmarkLeftHip == None:
+
+    if (landmarkRightShoulder == None or landmarkLeftShoulder == None or
+            landmarkRightHip == None or landmarkLeftHip == None):
       return None
 
-    lieDownR = False
-    lieDownL = False
-    if landmarkRightShoulder != None and landmarkRightHip != None:
-      xdefR = abs(landmarkRightShoulder.x - landmarkRightHip.x)
-      ydefR = abs(landmarkRightShoulder.y - landmarkRightHip.y)
-      #print(str(xdefR) + ", " + str(ydefR))
-      if xdefR > ydefR:
-        lieDownR = True
+    shoulderX = (landmarkRightShoulder.x + landmarkLeftShoulder.x) / 2
+    shoulderY = (landmarkRightShoulder.y + landmarkLeftShoulder.y) / 2
+    hipX = (landmarkRightHip.x + landmarkLeftHip.x) / 2
+    hipY = (landmarkRightHip.y + landmarkLeftHip.y) / 2
+    bodyAngle = math.degrees(math.atan2(hipY - shoulderY, shoulderX - hipX))
+    #print("deltaX = " + format(shoulderX - hipX, ".2f") + ", deltaY = " + format(hipY - shoulderY, ".2f") + ", bodyAngle = " + format(bodyAngle, ".2f"))
+    return bodyAngle
 
-    if landmarkLeftShoulder != None and landmarkLeftHip != None:
-      xdefL = abs(landmarkLeftShoulder.x - landmarkLeftHip.x)
-      ydefL = abs(landmarkLeftShoulder.y - landmarkLeftHip.y)
-      #print(str(xdefL) + ", " + str(ydefL))
-      if xdefL > ydefL:
-        lieDownL = True
-    #print("lieDownR = " + str(lieDownR) + ", lieDownL = " + str(lieDownL))
-    return lieDownR and lieDownL
+  def checkLieDown(self):
+    if self.__results.pose_landmarks == None:
+      return None
+
+    bodyAngle = self.calcBodyAngle(self.__results)
+    if bodyAngle == None:
+      return None
+    elif (
+        (bodyAngle >= -config.LIE_DOWN_ANGLE and bodyAngle <= config.LIE_DOWN_ANGLE) or
+        (bodyAngle <= config.LIE_DOWN_ANGLE - 180 or bodyAngle >= 180 - config.LIE_DOWN_ANGLE)
+    ):
+      return True
+    else:
+      return False
 
   def detect(self, flame):
     # Flip the image horizontally for a later selfie-view display, and convert
