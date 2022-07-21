@@ -59,18 +59,23 @@ class LieDownDetector:
 
   def checkLieDown(self):
     if self.__results.pose_landmarks == None:
-      return None
+      return None, None
+
+    minAngle1 = config.LIE_DOWN_ANGLE - config.LIE_DOWN_ANGLE_RANGE
+    maxAngle1 = config.LIE_DOWN_ANGLE + config.LIE_DOWN_ANGLE_RANGE
+    minAngle2 = minAngle1 + 180
+    maxAngle2 = maxAngle1 + 180
 
     bodyAngle = self.calcBodyAngle(self.__results)
     if bodyAngle == None:
-      return None
+      return None, None
     elif (
-        (bodyAngle >= -config.LIE_DOWN_ANGLE and bodyAngle <= config.LIE_DOWN_ANGLE) or
-        (bodyAngle <= config.LIE_DOWN_ANGLE - 180 or bodyAngle >= 180 - config.LIE_DOWN_ANGLE)
+        (bodyAngle >= minAngle1 and bodyAngle <= maxAngle1) or
+        (bodyAngle >= minAngle2 and bodyAngle <= maxAngle2)
     ):
-      return True
+      return True, bodyAngle
     else:
-      return False
+      return False, bodyAngle
 
   def detect(self, flame):
     # Flip the image horizontally for a later selfie-view display, and convert
@@ -104,10 +109,15 @@ class LieDownDetector:
     self.__bWakeUp = False
     images = []
     for flame in flames:
-      images.append(self.detect(flame))
-      checkLieDown = self.checkLieDown()
-      if checkLieDown == True:
+      image = self.detect(flame)
+      bLieDown, bodyAngle = self.checkLieDown()
+      if bodyAngle != None:
+        cv2.putText(image, "bodyAngle:" + '{:.1f}'.format(bodyAngle), (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
+      images.append(image)
+      if bLieDown == True:
         self.__bLieDown = True
-      elif checkLieDown == False:
+      elif bLieDown == False:
         self.__bWakeUp = True
+
     return images
