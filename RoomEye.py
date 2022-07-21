@@ -70,7 +70,7 @@ class RoomEye:
           print("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
 
     elif self.__bIllumination == self.LIGHT_OFF:
-      if self.__humanDetector.isPerson() > 0 or self.__lieDownDetector.isPerson():
+      if self.__humanDetector.isPerson() > 0:
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
           print("Light On!!")
