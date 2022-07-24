@@ -7,6 +7,9 @@ import traceback
 
 import config
 
+from logging import getLogger
+logger = getLogger("RoomEye").getChild("LieDownDetector")
+
 class HumanDetector:
   """
   人検知判定クラス
@@ -29,7 +32,7 @@ class HumanDetector:
     self.__darknetHeight = darknet.network_height(self.__network)
     self.__darknet_image = darknet.make_image(self.__darknetWidth, self.__darknetHeight, 3)
     self.__personImages = []
-    print("HumanDetector start")
+    logger.info("HumanDetector start")
 
   def parser(self):
     parser = argparse.ArgumentParser(description="YOLO Object Detection")

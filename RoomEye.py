@@ -9,6 +9,29 @@ from applianceController.method1_Login.NatureRemoController import NatureRemoCon
 from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
 
+import logging
+import os.path
+# logsフォルダが無ければ作成する
+if os.path.isdir("logs") == False:
+    os.mkdir("logs")
+# ロガーを取得する
+logger = logging.getLogger("RoomEye")
+logger.setLevel(logging.DEBUG)  # 出力レベルを設定
+# ハンドラー1を生成する
+h1 = logging.StreamHandler()
+h1.setLevel(logging.DEBUG)  # 出力レベルを設定
+# ハンドラー2を生成する
+h2 = logging.FileHandler('logs/RoomEye.log')
+h2.setLevel(logging.INFO)  # 出力レベルを設定
+# フォーマッタを生成する
+fmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# ハンドラーにフォーマッターを設定する
+h1.setFormatter(fmt)
+h2.setFormatter(fmt)
+# ロガーにハンドラーを設定する
+logger.addHandler(h1)
+logger.addHandler(h2)
+
 
 class RoomEye:
   LIGHT_OFF = 0
@@ -49,12 +72,12 @@ class RoomEye:
         if self.__lieDownDetector.isLieDown() and not self.__lieDownDetector.isWakeUp():
           self.__lieDownCnt += 1
           if self.__lieDownCnt >= config.LIE_DOWN_CNT_THREASHOLD:
-            print("Lie down !!")
+            logger.info("Lie down !!")
             self.lightOff()
             self.__bIllumination = self.LIGHT_OFF_LIEDOWN
             self.__lieDownCnt = 0
           else:
-            print("lieDownCnt = " + str(self.__lieDownCnt))
+            logger.info("lieDownCnt = " + str(self.__lieDownCnt))
         else:
           self.__lieDownCnt = 0
       else:
@@ -62,23 +85,23 @@ class RoomEye:
           self.__noPersonStart = time.time()
         self.__noPersonCnt += 1
         if time.time() - self.__noPersonStart >= config.NO_PERSON_TIME_THREASHOLD:
-          print("Light Off!!")
+          logger.info("Light Off!!")
           self.lightOff()
           self.__bIllumination = self.LIGHT_OFF
           self.__noPersonCnt = 0
         else:
-          print("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
+          logger.info("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
 
     elif self.__bIllumination == self.LIGHT_OFF:
       if self.__humanDetector.isPerson() > 0:
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
-          print("Light On!!")
+          logger.info("Light On!!")
           self.lightOn()
           self.__bIllumination = self.LIGHT_ON
           self.__personCnt = 0
         else:
-          print("personCnt = " + str(self.__personCnt))
+          logger.info("personCnt = " + str(self.__personCnt))
       else:
         self.__personCnt = 0
 
@@ -86,12 +109,12 @@ class RoomEye:
       if self.__lieDownDetector.isWakeUp():
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
-          print("Light On!!")
+          logger.info("Light On!!")
           self.lightOn()
           self.__bIllumination = self.LIGHT_ON
           self.__personCnt = 0
         else:
-          print("personCnt = " + str(self.__personCnt))
+          logger.info("personCnt = " + str(self.__personCnt))
       else:
         self.__personCnt = 0
 
@@ -101,7 +124,7 @@ class RoomEye:
       display_fps = self.__cvFpsCalc.get()
       success, image = self.__cap.read()
       if not success:
-        print("Ignoring empty camera frame.")
+        logger.error("Ignoring empty camera frame.")
         # If loading a video, use 'break' instead of 'continue'.
         continue
       image = cv2.flip(image, -1)

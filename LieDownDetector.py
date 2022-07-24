@@ -4,6 +4,8 @@ import math
 
 import config
 
+from logging import getLogger
+logger = getLogger("RoomEye").getChild("LieDownDetector")
 
 class LieDownDetector:
   """
@@ -54,7 +56,7 @@ class LieDownDetector:
     hipX = (landmarkRightHip.x + landmarkLeftHip.x) / 2
     hipY = (landmarkRightHip.y + landmarkLeftHip.y) / 2
     bodyAngle = math.degrees(math.atan2(hipY - shoulderY, shoulderX - hipX))
-    #print("deltaX = " + format(shoulderX - hipX, ".2f") + ", deltaY = " + format(hipY - shoulderY, ".2f") + ", bodyAngle = " + format(bodyAngle, ".2f"))
+    #logger.debug("deltaX = " + format(shoulderX - hipX, ".2f") + ", deltaY = " + format(hipY - shoulderY, ".2f") + ", bodyAngle = " + format(bodyAngle, ".2f"))
     return bodyAngle
 
   def checkLieDown(self):
