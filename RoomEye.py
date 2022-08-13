@@ -127,7 +127,12 @@ class RoomEye:
         logger.error("Ignoring empty camera frame.")
         # If loading a video, use 'break' instead of 'continue'.
         continue
-      image = cv2.flip(image, -1)
+
+      # 画像の反転と回転
+      if config.CAMERA_FLIP is not None:
+        image = cv2.flip(image, config.CAMERA_FLIP)
+      if config.CAMERA_ROTATE is not None:
+        image = cv2.rotate(image, config.CAMERA_ROTATE)
 
       # 人検知
       image1, personImages = self.__humanDetector.detect(image)
