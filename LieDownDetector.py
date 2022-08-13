@@ -15,8 +15,12 @@ class LieDownDetector:
   def __init__(self) -> None:
 
     self.__mpDrawing = mp.solutions.drawing_utils
-    self.__mpHolistic = mp.solutions.holistic
-    self.__holistic = self.__mpHolistic.Holistic(
+    #self.__mpHolistic = mp.solutions.holistic
+    #self.__holistic = self.__mpHolistic.Holistic(
+    #    min_detection_confidence=0.5,
+    #    min_tracking_confidence=0.5)
+    self.__mpPose = mp.solutions.pose
+    self.__pose = self.__mpPose.Pose(
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5)
     self.__results = None
@@ -87,19 +91,22 @@ class LieDownDetector:
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
-    self.__results = self.__holistic.process(image)
+    #self.__results = self.__holistic.process(image)
+    self.__results = self.__pose.process(image)
 
     # Draw landmark annotation on the image.
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    #self.__mpDrawing.draw_landmarks(
+    #    image, self.__results.face_landmarks, self.__mpHolistic.FACE_CONNECTIONS)
+    #self.__mpDrawing.draw_landmarks(
+    #    image, self.__results.left_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
+    #self.__mpDrawing.draw_landmarks(
+    #    image, self.__results.right_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
+    #self.__mpDrawing.draw_landmarks(
+    #    image, self.__results.pose_landmarks, self.__mpHolistic.POSE_CONNECTIONS)
     self.__mpDrawing.draw_landmarks(
-        image, self.__results.face_landmarks, self.__mpHolistic.FACE_CONNECTIONS)
-    self.__mpDrawing.draw_landmarks(
-        image, self.__results.left_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
-    self.__mpDrawing.draw_landmarks(
-        image, self.__results.right_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
-    self.__mpDrawing.draw_landmarks(
-        image, self.__results.pose_landmarks, self.__mpHolistic.POSE_CONNECTIONS)
+        image, self.__results.pose_landmarks, self.__mpPose.POSE_CONNECTIONS)
 
     return image
 
