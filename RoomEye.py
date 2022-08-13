@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 import config
 from HumanDetector import HumanDetector
-from applianceController.method1_Login.NatureRemoController import NatureRemoController
+from NatureRemoController.NatureRemoController import NatureRemoController
 from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
 
@@ -13,7 +13,7 @@ import logging
 import os.path
 # logsフォルダが無ければ作成する
 if os.path.isdir("logs") == False:
-    os.mkdir("logs")
+  os.mkdir("logs")
 # ロガーを取得する
 logger = logging.getLogger("RoomEye")
 logger.setLevel(logging.DEBUG)  # 出力レベルを設定
@@ -50,7 +50,7 @@ class RoomEye:
     self.__NATURE_REMO_TOKEN = os.environ.get("NATURE_REMO_TOKEN", "XXXXXXXXXXX Your Nature Remo Token XXXXXXXXXX")
     self.__ROOM_LIGHT_NAME = os.environ.get("ROOM_LIGHT_NAME", "Your Light Name")
     # NatureRemoに接続
-    self.__remo = NatureRemoController('Remo', self.__NATURE_REMO_TOKEN)
+    self.__remo = NatureRemoController(self.__NATURE_REMO_TOKEN)
     self.__bIllumination = self.LIGHT_OFF
     self.__lieDownCnt = 0
     self.__personCnt = 0
@@ -59,11 +59,11 @@ class RoomEye:
 
   def lightOn(self):
     # self.__remo.sendOnSignalAilab(self.__ROOM_LIGHT_NAME)
-    self.__remo.sendOnSignal(self.__ROOM_LIGHT_NAME)
+    self.__remo.sendOnSignalLight(self.__ROOM_LIGHT_NAME)
 
   def lightOff(self):
     # self.__remo.sendOffSignalAilab(self.__ROOM_LIGHT_NAME, 2)
-    self.__remo.sendOffSignal(self.__ROOM_LIGHT_NAME)
+    self.__remo.sendOffSignalLight(self.__ROOM_LIGHT_NAME)
 
   def applianceControl(self):
     if self.__bIllumination == self.LIGHT_ON:

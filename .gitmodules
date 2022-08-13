@@ -1,6 +1,6 @@
 [submodule "darknet"]
 	path = darknet
 	url = https://github.com/AlexeyAB/darknet
-[submodule "applianceController"]
-	path = applianceController
-	url = https://gitlab.com/theme16-human-augmentation/theme16-appliance-controller.git
+[submodule "NatureRemoController"]
+	path = NatureRemoController
+	url = https://github.com/mi83ki/nature-remo-controller.git
