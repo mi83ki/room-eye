@@ -66,14 +66,14 @@ class LieDownDetector:
     minAngle1 = config.LIE_DOWN_ANGLE - config.LIE_DOWN_ANGLE_RANGE
     maxAngle1 = config.LIE_DOWN_ANGLE + config.LIE_DOWN_ANGLE_RANGE
     minAngle2 = minAngle1 + 180
-    maxAngle2 = maxAngle1 + 180
+    maxAngle2 = maxAngle1 - 180
 
     bodyAngle = self.calcBodyAngle(self.__results)
     if bodyAngle == None:
       return None, None
     elif (
         (bodyAngle >= minAngle1 and bodyAngle <= maxAngle1) or
-        (bodyAngle >= minAngle2 and bodyAngle <= maxAngle2)
+        (bodyAngle >= minAngle2 or bodyAngle <= maxAngle2)
     ):
       return True, bodyAngle
     else:
