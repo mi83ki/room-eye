@@ -192,3 +192,6 @@ cython_debug/
 
 # VSCodeの設定を除外
 .vscode
+
+# ログファイルを除外
+logs/

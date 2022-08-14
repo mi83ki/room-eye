@@ -2,6 +2,7 @@ import cv2
 import os
 import time
 from dotenv import load_dotenv
+import traceback
 
 import config
 from HumanDetector import HumanDetector
@@ -10,6 +11,7 @@ from CvFpsCalc import CvFpsCalc
 from LieDownDetector import LieDownDetector
 
 import logging
+import logging.handlers
 import os.path
 # logsフォルダが無ければ作成する
 if os.path.isdir("logs") == False:
@@ -21,8 +23,12 @@ logger.setLevel(logging.DEBUG)  # 出力レベルを設定
 h1 = logging.StreamHandler()
 h1.setLevel(logging.DEBUG)  # 出力レベルを設定
 # ハンドラー2を生成する
-h2 = logging.FileHandler('logs/RoomEye.log')
-h2.setLevel(logging.INFO)  # 出力レベルを設定
+#h2 = logging.FileHandler('logs/RoomEye.log')
+h2 = logging.handlers.TimedRotatingFileHandler(
+    "logs/RoomEye", encoding='utf-8',
+    when='midnight', interval=1, backupCount=31,
+)
+h2.setLevel(logging.DEBUG)  # 出力レベルを設定
 # フォーマッタを生成する
 fmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # ハンドラーにフォーマッターを設定する
@@ -172,4 +178,7 @@ class RoomEye:
 
 if __name__ == "__main__":
   RoomEye = RoomEye()
-  RoomEye.run()
+  try:
+    RoomEye.run()
+  except:
+    logger.error(traceback.format_exc())
