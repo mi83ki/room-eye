@@ -8,7 +8,7 @@ import traceback
 import config
 
 from logging import getLogger
-logger = getLogger("RoomEye").getChild("LieDownDetector")
+logger = getLogger("RoomEye").getChild("HD")
 
 class HumanDetector:
   """
@@ -144,6 +144,12 @@ class HumanDetector:
       if label == "person":
         if float(confidence) > config.DETECT_THREASHOLD:
           personCnt += 1
+        x, y, w, h = self.convert2relative(bbox)
+        logger.debug("isPerson(): pCnt = " + str(personCnt) + ", conf = " + str(confidence) +
+                     ", bbox = (" + format(x, ".2f") +
+                     ", " + format(y, ".2f") +
+                     ", " + format(w, ".2f") +
+                     ", " + format(h, ".2f") + ")")
     return personCnt
 
   def detect(self, flame):

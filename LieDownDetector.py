@@ -5,7 +5,7 @@ import math
 import config
 
 from logging import getLogger
-logger = getLogger("RoomEye").getChild("LieDownDetector")
+logger = getLogger("RoomEye").getChild("LD")
 
 class LieDownDetector:
   """
@@ -35,6 +35,19 @@ class LieDownDetector:
 
   def isPerson(self):
     return self.__bLieDown or self.__bWakeUp
+
+  def getCenter(self, points):
+    sumX = 0
+    sumY = 0
+    cnt = 0
+    for point in points:
+      sumX += point.x
+      sumY += point.y
+      cnt += 1
+    if cnt == 0:
+      return None, None
+    else:
+      return sumX / cnt, sumY / cnt
 
   def calcBodyAngle(self, results):
     landmarkRightShoulder = None
@@ -79,8 +92,14 @@ class LieDownDetector:
         (bodyAngle >= minAngle1 and bodyAngle <= maxAngle1) or
         (bodyAngle >= minAngle2 or bodyAngle <= maxAngle2)
     ):
+      x, y = self.getCenter(self.__results.pose_landmarks.landmark)
+      logger.debug("checkLieDown(): True, angle = " + format(bodyAngle, ".2f") +
+                   ", center = (" + format(x, ".2f") + ", " + format(y, ".2f") + ")")
       return True, bodyAngle
     else:
+      x, y = self.getCenter(self.__results.pose_landmarks.landmark)
+      logger.debug("checkLieDown(): False, angle = " + format(bodyAngle, ".2f") +
+                   ", center = (" + format(x, ".2f") + ", " + format(y, ".2f") + ")")
       return False, bodyAngle
 
   def detect(self, flame):

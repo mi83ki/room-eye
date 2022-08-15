@@ -26,7 +26,7 @@ h1.setLevel(logging.DEBUG)  # 出力レベルを設定
 #h2 = logging.FileHandler('logs/RoomEye.log')
 h2 = logging.handlers.TimedRotatingFileHandler(
     "logs/RoomEye", encoding='utf-8',
-    when='midnight', interval=1, backupCount=31,
+    when='midnight', interval=1, backupCount=10,
 )
 h2.setLevel(logging.DEBUG)  # 出力レベルを設定
 # フォーマッタを生成する
