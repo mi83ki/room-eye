@@ -7,23 +7,27 @@ import config
 from logging import getLogger
 logger = getLogger("RoomEye").getChild("LD")
 
+
 class LieDownDetector:
   """
   寝ころび検知クラス
   """
 
-  def __init__(self) -> None:
+  def __init__(self, num) -> None:
 
     self.__mpDrawing = mp.solutions.drawing_utils
     #self.__mpHolistic = mp.solutions.holistic
-    #self.__holistic = self.__mpHolistic.Holistic(
+    # self.__holistic = self.__mpHolistic.Holistic(
     #    min_detection_confidence=0.5,
     #    min_tracking_confidence=0.5)
     self.__mpPose = mp.solutions.pose
-    self.__pose = self.__mpPose.Pose(
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5)
-    self.__results = None
+    self.__pose = []
+    self.__results = []
+    for i in range(num):
+      self.__pose.append(self.__mpPose.Pose(
+          min_detection_confidence=0.5,
+          min_tracking_confidence=0.5))
+      self.__results.append(None)
     self.__bLieDown = False
     self.__bWakeUp = False
 
@@ -76,8 +80,8 @@ class LieDownDetector:
     #logger.debug("deltaX = " + format(shoulderX - hipX, ".2f") + ", deltaY = " + format(hipY - shoulderY, ".2f") + ", bodyAngle = " + format(bodyAngle, ".2f"))
     return bodyAngle
 
-  def checkLieDown(self):
-    if self.__results.pose_landmarks == None:
+  def checkLieDown(self, index):
+    if (index >= len(self.__pose)) or (self.__results[index].pose_landmarks == None):
       return None, None
 
     minAngle1 = config.LIE_DOWN_ANGLE - config.LIE_DOWN_ANGLE_RANGE
@@ -85,24 +89,27 @@ class LieDownDetector:
     minAngle2 = minAngle1 + 180
     maxAngle2 = maxAngle1 - 180
 
-    bodyAngle = self.calcBodyAngle(self.__results)
+    bodyAngle = self.calcBodyAngle(self.__results[index])
     if bodyAngle == None:
       return None, None
     elif (
         (bodyAngle >= minAngle1 and bodyAngle <= maxAngle1) or
         (bodyAngle >= minAngle2 or bodyAngle <= maxAngle2)
     ):
-      x, y = self.getCenter(self.__results.pose_landmarks.landmark)
+      x, y = self.getCenter(self.__results[index].pose_landmarks.landmark)
       logger.debug("checkLieDown(): True, angle = " + format(bodyAngle, ".2f") +
                    ", center = (" + format(x, ".2f") + ", " + format(y, ".2f") + ")")
       return True, bodyAngle
     else:
-      x, y = self.getCenter(self.__results.pose_landmarks.landmark)
+      x, y = self.getCenter(self.__results[index].pose_landmarks.landmark)
       logger.debug("checkLieDown(): False, angle = " + format(bodyAngle, ".2f") +
                    ", center = (" + format(x, ".2f") + ", " + format(y, ".2f") + ")")
       return False, bodyAngle
 
-  def detect(self, flame):
+  def detect(self, flame, index):
+    if index >= len(self.__pose):
+      return flame
+
     # Flip the image horizontally for a later selfie-view display, and convert
     # the BGR image to RGB.
     image = cv2.cvtColor(flame, cv2.COLOR_BGR2RGB)
@@ -111,34 +118,34 @@ class LieDownDetector:
     # pass by reference.
     image.flags.writeable = False
     #self.__results = self.__holistic.process(image)
-    self.__results = self.__pose.process(image)
+    self.__results[index] = self.__pose[index].process(image)
 
     # Draw landmark annotation on the image.
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    #self.__mpDrawing.draw_landmarks(
+    # self.__mpDrawing.draw_landmarks(
     #    image, self.__results.face_landmarks, self.__mpHolistic.FACE_CONNECTIONS)
-    #self.__mpDrawing.draw_landmarks(
+    # self.__mpDrawing.draw_landmarks(
     #    image, self.__results.left_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
-    #self.__mpDrawing.draw_landmarks(
+    # self.__mpDrawing.draw_landmarks(
     #    image, self.__results.right_hand_landmarks, self.__mpHolistic.HAND_CONNECTIONS)
-    #self.__mpDrawing.draw_landmarks(
+    # self.__mpDrawing.draw_landmarks(
     #    image, self.__results.pose_landmarks, self.__mpHolistic.POSE_CONNECTIONS)
     self.__mpDrawing.draw_landmarks(
-        image, self.__results.pose_landmarks, self.__mpPose.POSE_CONNECTIONS)
+        image, self.__results[index].pose_landmarks, self.__mpPose.POSE_CONNECTIONS)
 
     return image
 
   def detects(self, flames):
+    self.__bLieDown = False
+    self.__bWakeUp = False
     if len(flames) == 0:
       return []
 
-    self.__bLieDown = False
-    self.__bWakeUp = False
     images = []
-    for flame in flames:
-      image = self.detect(flame)
-      bLieDown, bodyAngle = self.checkLieDown()
+    for index, flame in enumerate(flames):
+      image = self.detect(flame, index)
+      bLieDown, bodyAngle = self.checkLieDown(index)
       if bodyAngle != None:
         cv2.putText(image, "bodyAngle:" + '{:.1f}'.format(bodyAngle), (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
