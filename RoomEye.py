@@ -3,6 +3,8 @@ import os
 import time
 from dotenv import load_dotenv
 import traceback
+import numpy as np
+import threading
 
 import config
 from HumanDetector import HumanDetector
@@ -46,10 +48,23 @@ class RoomEye:
 
   def __init__(self) -> None:
     self.__humanDetector = HumanDetector()
-    self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
+    self.__humanDetector2 = HumanDetector()
+    # self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
+    # mjpg-streamerを動作させているPC・ポートを入力
+    URL = "http://192.168.0.130:8080/?action=stream"
+    self.__cap = cv2.VideoCapture(URL)
     self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)    # カメラバッファを1にすることでレスポンスを上げる
+    self.__imageA = None
+    self.__successA = False
+    t1 = threading.Thread(target=self.capMjpegStreamer, name="capMjpegStreamer")
+    t1.setDaemon(True)
+    t1.start()
+
+    self.__capB = cv2.VideoCapture(self.__humanDetector.getInput())
+    self.__capB.set(cv2.CAP_PROP_BUFFERSIZE, 1)    # カメラバッファを1にすることでレスポンスを上げる
+
     self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
-    self.__lieDownDetector = LieDownDetector()
+    self.__lieDownDetector = LieDownDetector(2)
 
     # 環境変数を読み込む
     load_dotenv()
@@ -71,11 +86,40 @@ class RoomEye:
     # self.__remo.sendOffSignalAilab(self.__ROOM_LIGHT_NAME, 2)
     self.__remo.sendOffSignalLight(self.__ROOM_LIGHT_NAME)
 
+  def isPerson(self):
+    return (
+        self.__humanDetector.isPerson() > 0 or
+        self.__humanDetector2.isPerson() > 0
+        # self.__lieDownDetector.isPerson()
+    )
+
+  def isLieDown(self):
+    return (
+        self.__lieDownDetector.isLieDown() and
+        not self.__lieDownDetector.isWakeUp() and
+        not self.__humanDetector2.isPerson() > 0
+    )
+
+  def isWakeUp(self):
+    return (
+        self.__lieDownDetector.isWakeUp() or
+        self.__humanDetector2.isPerson() > 0
+    )
+
+  def capMjpegStreamer(self):
+    while self.__cap.isOpened():
+      self.__successA, self.__imageA = self.__cap.read()
+      if not self.__successA:
+        logger.error("Ignoring empty camera frame mjpeg-streamer.")
+        break
+      time.sleep(0.07)
+    pass
+
   def applianceControl(self):
     if self.__bIllumination == self.LIGHT_ON:
-      if self.__humanDetector.isPerson() > 0 or self.__lieDownDetector.isPerson():
+      if self.isPerson() or self.__lieDownDetector.isPerson():
         self.__noPersonCnt = 0
-        if self.__lieDownDetector.isLieDown() and not self.__lieDownDetector.isWakeUp():
+        if self.isLieDown():
           self.__lieDownCnt += 1
           if self.__lieDownCnt >= config.LIE_DOWN_CNT_THREASHOLD:
             logger.info("Lie down !!")
@@ -99,7 +143,7 @@ class RoomEye:
           logger.info("noPersonCnt = " + str(self.__noPersonCnt) + ", noPersonTime = " + format(time.time() - self.__noPersonStart, ".2f"))
 
     elif self.__bIllumination == self.LIGHT_OFF:
-      if self.__humanDetector.isPerson() > 0:
+      if self.isPerson():
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
           logger.info("Light On!!")
@@ -112,7 +156,7 @@ class RoomEye:
         self.__personCnt = 0
 
     elif self.__bIllumination == self.LIGHT_OFF_LIEDOWN:
-      if self.__lieDownDetector.isWakeUp():
+      if self.isWakeUp():
         self.__personCnt += 1
         if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
           logger.info("Light On!!")
@@ -124,37 +168,78 @@ class RoomEye:
       else:
         self.__personCnt = 0
 
+  def trimImage(self, image, left, top, right, bottom, keepSize=False):
+    """
+    指定されたサイズに画像を切り取る
+
+    Args:
+        image (_type_): 画像
+        left (int): 左側
+        top (int): 上側
+        right (int): 右側
+        bottom (int): 下側
+        keepSize (bool, optional): True:サイズをキープして黒埋めする. Defaults to False.
+
+    Returns:
+        _type_: 切り取った画像
+    """
+    height, width = image.shape[:2]
+    img = image[top: bottom, left: right]
+    if keepSize:
+      blank = np.zeros((height, width, 3), np.uint8)
+      blank[top:bottom, left:right] = img
+      return blank
+    else:
+      return img
+
   def run(self):
     mediapipeWindows = []
-    while self.__cap.isOpened():
+    while self.__capB.isOpened():
+
       display_fps = self.__cvFpsCalc.get()
-      success, image = self.__cap.read()
-      if not success:
-        logger.error("Ignoring empty camera frame.")
-        # If loading a video, use 'break' instead of 'continue'.
+
+      if not self.__successA:
+        logger.error("Ignoring empty camera frame A.")
+        time.sleep(0.1)
         continue
 
+      self.__successA = False
       # 画像の反転と回転
       if config.CAMERA_FLIP is not None:
-        image = cv2.flip(image, config.CAMERA_FLIP)
+        image = cv2.flip(self.__imageA, config.CAMERA_FLIP)
       if config.CAMERA_ROTATE is not None:
-        image = cv2.rotate(image, config.CAMERA_ROTATE)
+        image = cv2.rotate(self.__imageA, config.CAMERA_ROTATE)
 
       # 人検知
-      image1, personImages = self.__humanDetector.detect(image)
+      darknetImg = self.trimImage(image, 200, 0, 560, 480, False)
+      image1, personImages = self.__humanDetector.detect(darknetImg)
       # FPS表示
       fps_color = (0, 255, 0)
       cv2.putText(image1, "FPS:" + str(display_fps), (10, 30),
                   cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA)
       cv2.imshow('Inference', image1)
 
+      successB, imageB = self.__capB.read()
+      if not successB:
+        logger.error("Ignoring empty camera frame B.")
+        break
+      imageB = cv2.rotate(imageB, cv2.ROTATE_90_CLOCKWISE)
+      imageB1, personImages2 = self.__humanDetector2.detect(imageB)
+      # FPS表示
+      fps_color = (0, 255, 0)
+      cv2.putText(imageB1, "FPS:" + str(display_fps), (10, 30),
+                  cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA)
+      cv2.imshow('InferenceB', imageB1)
+
       # 寝ころび検知
-      if len(personImages) == 0:
-        personImages.append(image)
-      images2 = self.__lieDownDetector.detects(personImages)
+      # if len(personImages) == 0:
+      #   personImages.append(image)
+      mediapipeImgs = [self.trimImage(image, 220, 90, 480, 310, False)]
+      # mediapipeImgs.extend(personImages)
+      images2 = self.__lieDownDetector.detects(mediapipeImgs)
       windows = []
       for index, img in enumerate(images2):
-        windowName = 'MediaPipe Holistic ' + str(index)
+        windowName = 'MediaPipe Pose ' + str(index)
         cv2.imshow(windowName, img)
         windows.append(windowName)
       # いらなくなったウインドウを閉じる
