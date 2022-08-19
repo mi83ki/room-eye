@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import traceback
 import numpy as np
 import threading
+import datetime
 
 import config
 from HumanDetector import HumanDetector
@@ -77,14 +78,24 @@ class RoomEye:
     self.__personCnt = 0
     self.__noPersonCnt = 0
     self.__noPersonStart = 0
+    self.__detectImage = None
 
   def lightOn(self):
     # self.__remo.sendOnSignalAilab(self.__ROOM_LIGHT_NAME)
     self.__remo.sendOnSignalLight(self.__ROOM_LIGHT_NAME)
+    if self.__detectImage is not None:
+      #filename = os.getcwd() + '/img_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_lightOn.jpg'
+      filename = '../logs/img_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_lightOn.jpg'
+      ret = cv2.imwrite(filename, self.__detectImage)
+      logger.info("lightOn(): Save Image " + str(ret) + ", " + filename)
 
   def lightOff(self):
     # self.__remo.sendOffSignalAilab(self.__ROOM_LIGHT_NAME, 2)
     self.__remo.sendOffSignalLight(self.__ROOM_LIGHT_NAME)
+    if self.__detectImage is not None:
+      filename = '../logs/img_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '_lightOff.jpg'
+      ret = cv2.imwrite(filename, self.__detectImage)
+      logger.info("lightOff(): Save Image " + str(ret) + ", " + filename)
 
   def isPerson(self):
     return (
@@ -112,7 +123,7 @@ class RoomEye:
       if not self.__successA:
         logger.error("Ignoring empty camera frame mjpeg-streamer.")
         break
-      time.sleep(0.07)
+      time.sleep(0.05)
     pass
 
   def applianceControl(self):
@@ -193,7 +204,6 @@ class RoomEye:
       return img
 
   def run(self):
-    mediapipeWindows = []
     while self.__capB.isOpened():
 
       display_fps = self.__cvFpsCalc.get()
@@ -217,7 +227,6 @@ class RoomEye:
       fps_color = (0, 255, 0)
       cv2.putText(image1, "FPS:" + str(display_fps), (10, 30),
                   cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA)
-      cv2.imshow('Inference', image1)
 
       successB, imageB = self.__capB.read()
       if not successB:
@@ -225,11 +234,6 @@ class RoomEye:
         break
       imageB = cv2.rotate(imageB, cv2.ROTATE_90_CLOCKWISE)
       imageB1, personImages2 = self.__humanDetector2.detect(imageB)
-      # FPS表示
-      fps_color = (0, 255, 0)
-      cv2.putText(imageB1, "FPS:" + str(display_fps), (10, 30),
-                  cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA)
-      cv2.imshow('InferenceB', imageB1)
 
       # 寝ころび検知
       # if len(personImages) == 0:
@@ -237,16 +241,15 @@ class RoomEye:
       mediapipeImgs = [self.trimImage(image, 220, 90, 480, 310, False)]
       # mediapipeImgs.extend(personImages)
       images2 = self.__lieDownDetector.detects(mediapipeImgs)
-      windows = []
+
+      # 画像の表示
+      detectImageTile = [[image1, imageB1],
+                         [np.zeros((320, 240, 3), np.uint8)]]
       for index, img in enumerate(images2):
-        windowName = 'MediaPipe Pose ' + str(index)
-        cv2.imshow(windowName, img)
-        windows.append(windowName)
-      # いらなくなったウインドウを閉じる
-      for window in mediapipeWindows:
-        if not window in windows:
-          cv2.destroyWindow(window)
-      mediapipeWindows = windows
+        detectImageTile[1].append(img)
+      detectImageTile[1].append(np.zeros((320, 240, 3), np.uint8))
+      self.__detectImage = concat_tile_resize(detectImageTile)
+      cv2.imshow('detectImage', self.__detectImage)
 
       # 家電の操作
       self.applianceControl()
@@ -259,6 +262,25 @@ class RoomEye:
 
     self.__cap.release()
     cv2.destroyAllWindows()
+
+
+def vconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
+  w_min = min(im.shape[1] for im in im_list)
+  im_list_resize = [cv2.resize(im, (w_min, int(im.shape[0] * w_min / im.shape[1])), interpolation=interpolation)
+                    for im in im_list]
+  return cv2.vconcat(im_list_resize)
+
+
+def hconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
+  h_min = min(im.shape[0] for im in im_list)
+  im_list_resize = [cv2.resize(im, (int(im.shape[1] * h_min / im.shape[0]), h_min), interpolation=interpolation)
+                    for im in im_list]
+  return cv2.hconcat(im_list_resize)
+
+
+def concat_tile_resize(im_list_2d, interpolation=cv2.INTER_CUBIC):
+  im_list_v = [hconcat_resize_min(im_list_h, interpolation=cv2.INTER_CUBIC) for im_list_h in im_list_2d]
+  return vconcat_resize_min(im_list_v, interpolation=cv2.INTER_CUBIC)
 
 
 if __name__ == "__main__":
