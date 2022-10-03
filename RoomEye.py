@@ -11,7 +11,9 @@ import cv2
 import numpy as np
 from dotenv import load_dotenv
 
-import config
+from config import (CAMERA_FLIP, CAMERA_ROTATE, ENABLE_LIEDOWN,
+                    ENABLE_SECOND_CAMERA, LIE_DOWN_CNT_THREASHOLD,
+                    NO_PERSON_TIME_THREASHOLD, PERSON_CNT_THREASHOLD)
 from CvFpsCalc import CvFpsCalc
 from HumanDetector import HumanDetector
 from LieDownDetector import LieDownDetector
@@ -55,23 +57,28 @@ class RoomEye:
 
     def __init__(self) -> None:
         self.__humanDetector = HumanDetector()
-        self.__humanDetector2 = HumanDetector()
         # self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
         # mjpg-streamerを動作させているPC・ポートを入力
         URL = "http://192.168.0.130:8080/?action=stream"
         self.__cap = cv2.VideoCapture(URL)
         self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
+        numCam = 1
         self.__imageA = None
         self.__successA = False
         t1 = threading.Thread(target=self.capMjpegStreamer, name="capMjpegStreamer")
         t1.setDaemon(True)
         t1.start()
 
-        self.__capB = cv2.VideoCapture(self.__humanDetector.getInput())
-        self.__capB.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
+        if ENABLE_SECOND_CAMERA:
+            self.__humanDetector2 = HumanDetector()
+            self.__capB = cv2.VideoCapture(self.__humanDetector.getInput())
+            self.__capB.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
+            numCam += 1
 
         self.__cvFpsCalc = CvFpsCalc(buffer_len=10)
-        self.__lieDownDetector = LieDownDetector(2)
+
+        if ENABLE_LIEDOWN:
+            self.__lieDownDetector = LieDownDetector(numCam)
 
         # 環境変数を読み込む
         load_dotenv()
@@ -79,6 +86,7 @@ class RoomEye:
         self.__ROOM_LIGHT_NAME = os.environ.get("ROOM_LIGHT_NAME", "Your Light Name")
         # NatureRemoに接続
         self.__remo = NatureRemoController(self.__NATURE_REMO_TOKEN)
+
         self.__bIllumination = self.LIGHT_OFF
         self.__lieDownCnt = 0
         self.__personCnt = 0
@@ -106,19 +114,19 @@ class RoomEye:
     def isPerson(self):
         return (
             self.__humanDetector.isPerson() > 0
-            or self.__humanDetector2.isPerson() > 0
+            or (ENABLE_SECOND_CAMERA and self.__humanDetector2.isPerson() > 0)
             # self.__lieDownDetector.isPerson()
         )
 
     def isLieDown(self):
-        return (
-            self.__lieDownDetector.isLieDown()
-            and not self.__lieDownDetector.isWakeUp()
-            and not self.__humanDetector2.isPerson() > 0
+        return (ENABLE_LIEDOWN and self.__lieDownDetector.isLieDown() and not self.__lieDownDetector.isWakeUp()) and (
+            ENABLE_SECOND_CAMERA and not self.__humanDetector2.isPerson() > 0
         )
 
     def isWakeUp(self):
-        return self.__lieDownDetector.isWakeUp() or self.__humanDetector2.isPerson() > 0
+        return (ENABLE_LIEDOWN and self.__lieDownDetector.isWakeUp()) or (
+            ENABLE_SECOND_CAMERA and self.__humanDetector2.isPerson() > 0
+        )
 
     def capMjpegStreamer(self):
         while self.__cap.isOpened():
@@ -131,11 +139,11 @@ class RoomEye:
 
     def applianceControl(self):
         if self.__bIllumination == self.LIGHT_ON:
-            if self.isPerson() or self.__lieDownDetector.isPerson():
+            if self.isPerson() or (ENABLE_LIEDOWN and self.__lieDownDetector.isPerson()):
                 self.__noPersonCnt = 0
                 if self.isLieDown():
                     self.__lieDownCnt += 1
-                    if self.__lieDownCnt >= config.LIE_DOWN_CNT_THREASHOLD:
+                    if self.__lieDownCnt >= LIE_DOWN_CNT_THREASHOLD:
                         logger.info("Lie down !!")
                         self.lightOff()
                         self.__bIllumination = self.LIGHT_OFF_LIEDOWN
@@ -148,7 +156,7 @@ class RoomEye:
                 if self.__noPersonCnt == 0:
                     self.__noPersonStart = time.time()
                 self.__noPersonCnt += 1
-                if time.time() - self.__noPersonStart >= config.NO_PERSON_TIME_THREASHOLD:
+                if time.time() - self.__noPersonStart >= NO_PERSON_TIME_THREASHOLD:
                     logger.info("Light Off!!")
                     self.lightOff()
                     self.__bIllumination = self.LIGHT_OFF
@@ -164,7 +172,7 @@ class RoomEye:
         elif self.__bIllumination == self.LIGHT_OFF:
             if self.isPerson():
                 self.__personCnt += 1
-                if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
+                if self.__personCnt >= PERSON_CNT_THREASHOLD:
                     logger.info("Light On!!")
                     self.lightOn()
                     self.__bIllumination = self.LIGHT_ON
@@ -177,7 +185,7 @@ class RoomEye:
         elif self.__bIllumination == self.LIGHT_OFF_LIEDOWN:
             if self.isWakeUp():
                 self.__personCnt += 1
-                if self.__personCnt >= config.PERSON_CNT_THREASHOLD:
+                if self.__personCnt >= PERSON_CNT_THREASHOLD:
                     logger.info("Light On!!")
                     self.lightOn()
                     self.__bIllumination = self.LIGHT_ON
@@ -187,9 +195,12 @@ class RoomEye:
             else:
                 self.__personCnt = 0
 
+    def getBlankHW(self, height, width):
+        return np.zeros((height, width, 3), np.uint8)
+
     def getBlank(self, image):
         height, width = image.shape[:2]
-        return np.zeros((height, width, 3), np.uint8)
+        return self.getBlankHW(height, width)
 
     def trimImage(self, image, left, top, right, bottom, keepSize=False):
         """
@@ -214,40 +225,30 @@ class RoomEye:
         else:
             return img
 
-    def run(self):
-        while self.__capB.isOpened():
+    def procCamA(self):
+        display_fps = self.__cvFpsCalc.get()
+        if not self.__successA:
+            logger.error("Ignoring empty camera frame A.")
+            return self.getBlankHW(480, 640), []
 
-            display_fps = self.__cvFpsCalc.get()
+        self.__successA = False
+        # 画像の反転と回転
+        if CAMERA_FLIP is not None:
+            image = cv2.flip(self.__imageA, CAMERA_FLIP)
+        if CAMERA_ROTATE is not None:
+            image = cv2.rotate(self.__imageA, CAMERA_ROTATE)
 
-            if not self.__successA:
-                logger.error("Ignoring empty camera frame A.")
-                time.sleep(0.1)
-                continue
+        # 人検知
+        darknetImg = self.trimImage(image, 180, 50, 640, 350, False)
+        image1, personImages = self.__humanDetector.detect(darknetImg)
+        # FPS表示
+        fps_color = (0, 255, 0)
+        cv2.putText(
+            image1, "FPS:" + str(display_fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA
+        )
 
-            self.__successA = False
-            # 画像の反転と回転
-            if config.CAMERA_FLIP is not None:
-                image = cv2.flip(self.__imageA, config.CAMERA_FLIP)
-            if config.CAMERA_ROTATE is not None:
-                image = cv2.rotate(self.__imageA, config.CAMERA_ROTATE)
-
-            # 人検知
-            darknetImg = self.trimImage(image, 180, 0, 640, 480, False)
-            image1, personImages = self.__humanDetector.detect(darknetImg)
-            # FPS表示
-            fps_color = (0, 255, 0)
-            cv2.putText(
-                image1, "FPS:" + str(display_fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, fps_color, 2, cv2.LINE_AA
-            )
-
-            successB, imageB = self.__capB.read()
-            if not successB:
-                logger.error("Ignoring empty camera frame B.")
-                break
-            # imageB = cv2.rotate(imageB, cv2.ROTATE_90_CLOCKWISE)
-            imageB1, personImages2 = self.__humanDetector2.detect(imageB)
-
-            # 寝ころび検知
+        # 寝ころび検知
+        if ENABLE_LIEDOWN:
             # if len(personImages) == 0:
             #   personImages.append(image)
             # mediapipeImgs = [self.trimImage(image, 220, 90, 480, 310, False),
@@ -258,15 +259,45 @@ class RoomEye:
             # if len(personImages2) > 0:
             #  mediapipeImgs[2] = personImages2[0]
             images2 = self.__lieDownDetector.detects(mediapipeImgs)
+        else:
+            images2 = []
+
+        return image1, images2
+
+    def procCamB(self):
+        successB, imageB = self.__capB.read()
+        if not successB:
+            logger.error("Ignoring empty camera frame B.")
+            return self.getBlankHW(480, 640)
+        # imageB = cv2.rotate(imageB, cv2.ROTATE_90_CLOCKWISE)
+        imageB1, personImages2 = self.__humanDetector2.detect(imageB)
+        return imageB1
+
+    def imShow(self, image1, images2, imageB1):
+        detectImageTile = []
+        line1 = [image1]
+        if ENABLE_SECOND_CAMERA:
+            line1.append(imageB1)
+        detectImageTile.append(line1)
+        if ENABLE_LIEDOWN:
+            line2 = []
+            for index, img in enumerate(images2):
+                line2.append(img)
+            line2.append(np.zeros((320, 240, 3), np.uint8))
+            detectImageTile.append(line2)
+        self.__detectImage = concat_tile_resize(detectImageTile)
+        cv2.imshow("detectImage", self.__detectImage)
+
+    def run(self):
+        while True:
+            image1, images2 = self.procCamA()
+            if ENABLE_SECOND_CAMERA:
+                imageB1 = self.procCamB()
+            else:
+                imageB1 = self.getBlankHW(480, 640)
 
             # 画像の表示
-            detectImageTile = [[image1, imageB1], []]
-            # [np.zeros((320, 240, 3), np.uint8)]]
-            for index, img in enumerate(images2):
-                detectImageTile[1].append(img)
-            detectImageTile[1].append(np.zeros((320, 240, 3), np.uint8))
-            self.__detectImage = concat_tile_resize(detectImageTile)
-            cv2.imshow("detectImage", self.__detectImage)
+            self.imShow(image1, images2, imageB1)
 
             # 家電の操作
             self.applianceControl()
@@ -279,6 +310,9 @@ class RoomEye:
 
         self.__cap.release()
         cv2.destroyAllWindows()
+
+    def release(self):
+        self.__cap.release()
 
 
 def vconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
@@ -307,4 +341,6 @@ if __name__ == "__main__":
     try:
         RoomEye.run()
     except:
+        RoomEye.release()
+        cv2.destroyAllWindows()
         logger.error(traceback.format_exc())

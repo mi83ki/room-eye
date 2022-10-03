@@ -15,7 +15,11 @@ class LieDownDetector:
     """
 
     def __init__(self, num) -> None:
-
+        """
+        コンストラクタ
+        Args:
+            num (int): 一回の計算周期で骨格検知させたい画像の枚数
+        """
         self.__mpDrawing = mp.solutions.drawing_utils
         # self.__mpHolistic = mp.solutions.holistic
         # self.__holistic = self.__mpHolistic.Holistic(
