@@ -29,7 +29,7 @@ class HumanDetector:
         self.__darknetWidth = darknet.network_width(self.__network)
         self.__darknetHeight = darknet.network_height(self.__network)
         self.__darknet_image = darknet.make_image(self.__darknetWidth, self.__darknetHeight, 3)
-        self.__personImages = []
+        self.__personCnt = 0
         logger.info("HumanDetector start")
 
     def parser(self):
@@ -129,15 +129,29 @@ class HumanDetector:
         return outImage, personImages, detections
 
     def isPerson(self):
-        personCnt = 0
+        return self.__personCnt
+
+    def detect(self, flame):
+        self.__personCnt = 0
+        if flame is None:
+            return flame, None
+        image, personImages, self.__detections = self.image_detection(
+            flame,
+            self.__network,
+            self.__class_names,
+            self.__class_colors,
+            self.__args.thresh,
+            self.__darknetWidth,
+            self.__darknetHeight,
+        )
         for label, confidence, bbox in self.__detections:
             if label == "person":
                 if float(confidence) > config.DETECT_THREASHOLD:
-                    personCnt += 1
+                    self.__personCnt += 1
                 x, y, w, h = self.convert2relative(bbox)
                 logger.debug(
                     "isPerson(): pCnt = "
-                    + str(personCnt)
+                    + str(self.__personCnt)
                     + ", conf = "
                     + str(confidence)
                     + ", bbox = ("
@@ -150,16 +164,4 @@ class HumanDetector:
                     + format(h, ".2f")
                     + ")"
                 )
-        return personCnt
-
-    def detect(self, flame):
-        image, personImages, self.__detections = self.image_detection(
-            flame,
-            self.__network,
-            self.__class_names,
-            self.__class_colors,
-            self.__args.thresh,
-            self.__darknetWidth,
-            self.__darknetHeight,
-        )
         return image, personImages

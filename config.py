@@ -6,7 +6,7 @@ ENABLE_LIEDOWN = False
 ENABLE_SECOND_CAMERA = False
 
 # 人検知を判定するしきい値
-DETECT_THREASHOLD = 0.35
+DETECT_THREASHOLD = 0.40
 
 # 寝ころびと判定する姿勢角[deg]
 LIE_DOWN_ANGLE = 0

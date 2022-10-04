@@ -229,7 +229,7 @@ class RoomEye:
         display_fps = self.__cvFpsCalc.get()
         if not self.__successA:
             logger.error("Ignoring empty camera frame A.")
-            return self.getBlankHW(480, 640), []
+            return None, None
 
         self.__successA = False
         # 画像の反転と回転
@@ -239,7 +239,7 @@ class RoomEye:
             image = cv2.rotate(self.__imageA, CAMERA_ROTATE)
 
         # 人検知
-        darknetImg = self.trimImage(image, 180, 50, 640, 350, False)
+        darknetImg = self.trimImage(image, 180, 30, 500, 370, False)
         image1, personImages = self.__humanDetector.detect(darknetImg)
         # FPS表示
         fps_color = (0, 255, 0)
@@ -268,18 +268,18 @@ class RoomEye:
         successB, imageB = self.__capB.read()
         if not successB:
             logger.error("Ignoring empty camera frame B.")
-            return self.getBlankHW(480, 640)
+            return None
         # imageB = cv2.rotate(imageB, cv2.ROTATE_90_CLOCKWISE)
         imageB1, personImages2 = self.__humanDetector2.detect(imageB)
         return imageB1
 
-    def imShow(self, image1, images2, imageB1):
+    def imShow(self, image1, images2=None, imageB1=None):
         detectImageTile = []
         line1 = [image1]
-        if ENABLE_SECOND_CAMERA:
+        if imageB1 is not None:
             line1.append(imageB1)
         detectImageTile.append(line1)
-        if ENABLE_LIEDOWN:
+        if images2 is not None and len(images2) > 0:
             line2 = []
             for index, img in enumerate(images2):
                 line2.append(img)
@@ -290,11 +290,15 @@ class RoomEye:
 
     def run(self):
         while True:
+            while not self.__successA:
+                time.sleep(0.1)
             image1, images2 = self.procCamA()
+            if image1 is None:
+                continue
             if ENABLE_SECOND_CAMERA:
                 imageB1 = self.procCamB()
             else:
-                imageB1 = self.getBlankHW(480, 640)
+                imageB1 = None
 
             # 画像の表示
             self.imShow(image1, images2, imageB1)
