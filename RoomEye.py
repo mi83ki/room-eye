@@ -133,9 +133,9 @@ class RoomEye:
             self.__successA, self.__imageA = self.__cap.read()
             if not self.__successA:
                 logger.error("Ignoring empty camera frame mjpeg-streamer.")
-                break
+                time.sleep(3)
             time.sleep(0.05)
-        pass
+        logger.error("capMjpegStreamer(): Finish thread.")
 
     def applianceControl(self):
         if self.__bIllumination == self.LIGHT_ON:
