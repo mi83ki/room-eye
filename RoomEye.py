@@ -344,7 +344,7 @@ if __name__ == "__main__":
     RoomEye = RoomEye()
     try:
         RoomEye.run()
-    except:
+    except:  # noqa: E722
         RoomEye.release()
         cv2.destroyAllWindows()
         logger.error(traceback.format_exc())
