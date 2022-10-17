@@ -58,10 +58,7 @@ class RoomEye:
     def __init__(self) -> None:
         self.__humanDetector = HumanDetector()
         # self.__cap = cv2.VideoCapture(self.__humanDetector.getInput())
-        # mjpg-streamerを動作させているPC・ポートを入力
-        URL = "http://192.168.0.130:8080/?action=stream"
-        self.__cap = cv2.VideoCapture(URL)
-        self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
+        # self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
         numCam = 1
         self.__imageA = None
         self.__successA = False
@@ -129,13 +126,22 @@ class RoomEye:
         )
 
     def capMjpegStreamer(self):
-        while self.__cap.isOpened():
-            self.__successA, self.__imageA = self.__cap.read()
-            if not self.__successA:
-                logger.error("Ignoring empty camera frame mjpeg-streamer.")
-                time.sleep(3)
-            time.sleep(0.05)
-        logger.error("capMjpegStreamer(): Finish thread.")
+        # mjpg-streamerを動作させているPC・ポートを入力
+        URL = "http://192.168.0.130:8080/?action=stream"
+        while True:
+            self.__cap = cv2.VideoCapture(URL)
+            self.__cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # カメラバッファを1にすることでレスポンスを上げる
+            self.__imageA = None
+            self.__successA = False
+            while self.__cap.isOpened():
+                self.__successA, self.__imageA = self.__cap.read()
+                if not self.__successA:
+                    logger.error("Ignoring empty camera frame mjpeg-streamer.")
+                    self.__cap.release()
+                    break
+                time.sleep(0.05)
+            logger.error("capMjpegStreamer(): Reconnect VideoCapture.")
+            time.sleep(3)
 
     def applianceControl(self):
         if self.__bIllumination == self.LIGHT_ON:
