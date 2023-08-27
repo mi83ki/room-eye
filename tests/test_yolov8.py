@@ -2,9 +2,11 @@ import cv2
 from ultralytics import YOLO
 
 # Load the YOLOv8 model
-model = YOLO('weights/yolov8n.pt')
-#model = YOLO("yolov8x.pt")
-#model = YOLO("yolov8x-seg.pt")
+#model = YOLO('weights/yolov8n.pt')
+#model = YOLO("weights/yolov8x.pt")
+#model = YOLO("weights/yolov8x-seg.pt")
+#model = YOLO("weights/yolov8n-seg.pt")
+model = YOLO("weights/yolov8m-seg.pt")
 
 # Open the video file
 cap = cv2.VideoCapture(0)
