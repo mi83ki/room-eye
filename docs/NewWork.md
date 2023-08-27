@@ -14,7 +14,7 @@
 ### 取り組み1：言葉にしなくても察してくれる拡張
 
 書斎のPCにログインすると自動でリビングの照明を消し、書斎の照明をONしてくれる
-![step1](img/step1.drawio.svg)
+![step1](imgs/step1.drawio.svg)
 
 ### 取り組み2：言葉にしなくても察してくれる拡張Ver.2
 
@@ -25,7 +25,7 @@
 存在だけでなく、寝ころびも検知してスマートに家電を操作
 <https://www.youtube.com/watch?v=W6YuXV-dDOQ>
 
-![step3](img/step3.drawio.svg)
+![step3](imgs/step3.drawio.svg)
 
 ### 取り組み4：HandX
 
@@ -39,7 +39,7 @@
 
 <https://www.youtube.com/watch?v=W6YuXV-dDOQ>
 
-![step4](img/step4.drawio.svg)
+![step4](imgs/step4.drawio.svg)
 
 ## 今回取り組むこと
 
@@ -77,4 +77,4 @@
 
 - カメラモジュールを追加できるようにする
 
-![step5](img/step5.drawio.svg)
+![step5](imgs/step5.drawio.svg)
