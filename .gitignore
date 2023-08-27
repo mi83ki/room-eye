@@ -195,3 +195,6 @@ cython_debug/
 
 # ログファイルを除外
 logs/
+
+# YOLOの重みデータを除外
+weights/

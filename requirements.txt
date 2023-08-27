@@ -1,0 +1,6 @@
+python-dotenv
+ultralytics
+
+pylint
+mypy
+black

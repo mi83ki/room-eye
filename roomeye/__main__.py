@@ -9,12 +9,17 @@ import traceback
 
 import cv2
 import numpy as np
-from dotenv import load_dotenv
-
-from config import (CAMERA_FLIP, CAMERA_ROTATE, ENABLE_LIEDOWN,
-                    ENABLE_SECOND_CAMERA, LIE_DOWN_CNT_THREASHOLD,
-                    NO_PERSON_TIME_THREASHOLD, PERSON_CNT_THREASHOLD)
+from config import (
+    CAMERA_FLIP,
+    CAMERA_ROTATE,
+    ENABLE_LIEDOWN,
+    ENABLE_SECOND_CAMERA,
+    LIE_DOWN_CNT_THREASHOLD,
+    NO_PERSON_TIME_THREASHOLD,
+    PERSON_CNT_THREASHOLD,
+)
 from CvFpsCalc import CvFpsCalc
+from dotenv import load_dotenv
 from HumanDetector import HumanDetector
 from LieDownDetector import LieDownDetector
 from NatureRemoController.NatureRemoController import NatureRemoController
@@ -207,7 +212,6 @@ class RoomEye:
     def getBlank(self, image):
         height, width = image.shape[:2]
         return self.getBlankHW(height, width)
-
     def trimImage(self, image, left, top, right, bottom, keepSize=False):
         """
         指定されたサイズに画像を切り取る
