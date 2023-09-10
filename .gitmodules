@@ -1,0 +1,3 @@
+[submodule "libs/natureremocon"]
+	path = libs/natureremocon
+	url = https://github.com/mi83ki/natureremocon.git
