@@ -186,7 +186,7 @@ cython_debug/
 .vscode/*.code-snippets
 
 # Ignore code-workspaces
-*.code-workspace
+# *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
 

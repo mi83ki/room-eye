@@ -1,0 +1,42 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"[python]": {
+			"editor.tabSize": 4,
+			"editor.formatOnSave": true,
+			"editor.formatOnPaste": false,
+			"editor.formatOnType": false,
+			"editor.defaultFormatter": "ms-python.black-formatter"
+		},
+		"python.linting.flake8Enabled": false,
+		"python.linting.mypyEnabled": true,
+		"python.linting.pylamaEnabled": false,
+		"python.linting.pylintEnabled": true,
+		"python.linting.enabled": true,
+		"python.linting.lintOnSave": true,
+		"python.formatting.provider": "black",
+		"isort.args": [
+				"--profile",
+				"black"
+		],
+		"black-formatter.args": [
+				"--line-length=88"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: モジュール",
+				"type": "python",
+				"request": "launch",
+				"module": "roomeye",
+				"justMyCode": true
+			}
+		]
+	}
+}

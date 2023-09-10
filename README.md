@@ -46,7 +46,6 @@
 以下のコマンドで仮想環境を構築する
 
 ~~~bash
-cd backend/
 python -m venv venv
 ~~~
 

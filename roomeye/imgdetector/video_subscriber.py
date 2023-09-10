@@ -6,11 +6,13 @@
 import threading
 import time
 from logging import Logger
+from threading import Event
 
 import cv2
 
 import roomeye.common.logging_manager as logging_manager
 
+# ロガー
 logger: Logger = logging_manager.get_logger()
 
 
@@ -18,14 +20,19 @@ class VideoSubscriber(threading.Thread):
     """画像を取得するクラス"""
 
     def __init__(self, url: str | int = 0) -> None:
+        """コンストラクタ
+
+        Args:
+            url (str | int, optional): キャプチャデバイス番号 or URL. Defaults to 0.
+        """
         super().__init__(name=f"VideoSubscriber_{url}", daemon=True)
-        self._alive = True
-        self._started = threading.Event()
+        self._alive: bool = True
+        self._started: Event = threading.Event()
         self._started.clear()
 
         self._url: str | int = url
-        self._cnt = 0
-        self._fps = 0
+        self._cnt: int = 0
+        self._fps: float = 0
         self._frame = None
 
     def kill(self) -> None:
@@ -48,7 +55,7 @@ class VideoSubscriber(threading.Thread):
                 if success:
                     # fpsの計算
                     self._cnt += 1
-                    now_time = time.perf_counter()
+                    now_time: float = time.perf_counter()
                     if now_time - last_time >= 1.0:
                         self._fps = self._cnt
                         self._cnt = 0
@@ -60,7 +67,7 @@ class VideoSubscriber(threading.Thread):
                     event = threading.Event()
                     event.wait(timeout=0.1)
                 self._started.wait()
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-exception-caught
                 logger.exception({"action": "DroneVideo.run", "ex": ex})
         # Release the video capture object and close the display window
         cap.release()
