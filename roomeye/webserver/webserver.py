@@ -26,9 +26,18 @@ class WebServer(metaclass=Singleton):
         # コールバック関数
         self._notice_passing_sensor: Callable[[bool], None] = notice_passing_sensor
         # FastAPI
-        self.app = FastAPI()
+        self._app = FastAPI()
         # APIのURL設定
-        self.app.post("/api/v0/sensors")(self.post_sensors)
+        self._app.post("/api/v0/sensors")(self.post_sensors)
+
+    @property
+    def app(self) -> FastAPI:
+        """FastAPIのappを取得する
+
+        Returns:
+            FastAPI: _description_
+        """
+        return self._app
 
     # @app.post("/api/v0/sensors")
     async def post_sensors(self, body: datadict.SensorInfo) -> Response:
