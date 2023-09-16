@@ -19,7 +19,7 @@ class HumanDetector:
 
     def begin(self) -> None:
         # Load the YOLOv8 model
-        model = YOLO("yolov8n.pt")
+        model = YOLO("weights/yolov8n.pt")
 
         # Open the video file
         cap = cv2.VideoCapture(0)
