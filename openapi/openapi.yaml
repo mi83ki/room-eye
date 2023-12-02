@@ -1,0 +1,107 @@
+openapi: 3.0.0
+
+info:
+  title: "room-eye Web API"
+  version: "0.0.0"
+
+servers:
+  - url: http://localhost:3000/api/v0
+
+paths:
+  /sensors:
+    post:
+      operationId: registSensorInfo
+      summary: 複数のセンサー情報を登録します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/sensorInfo"
+      responses:
+        "200":
+          description: OK
+
+  /images:
+    post:
+      operationId: registImage
+      summary: カメラ画像を登録します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/imageInfo"
+      responses:
+        "200":
+          description: OK
+
+  /datetime:
+    get:
+      operationId: getDatetime
+      summary: 現在時刻を取得します
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/datetimeInfo"
+
+components:
+  schemas:
+    sensorInfo:
+      description: センサー情報
+      type: object
+      properties:
+        deviceId:
+          title: デバイスID
+          type: string
+        temperature:
+          title: 温度
+          type: number
+        humidity:
+          title: 湿度
+          type: number
+        co2:
+          title: CO2濃度
+          type: number
+        illumination:
+          title: 照度
+          type: number
+        soilTemperature:
+          title: 土壌温度
+          type: number
+        soilHumidity:
+          title: 土壌湿度
+          type: number
+        ec:
+          title: 肥料濃度
+          type: number
+        ph:
+          title: pH濃度
+          type: number
+        passing:
+          title: 通過検知
+          type: boolean
+      required:
+        - deviceId
+
+    imageInfo:
+      description: カメラ画像情報
+      type: object
+      properties:
+        deviceId:
+          title: デバイスID
+          type: string
+      required:
+        - deviceId
+
+    datetimeInfo:
+      description: 現在時刻
+      type: object
+      properties:
+        datetime:
+          title: 現在時刻（ISO 8601 拡張形式））
+          type: string
+          example: "2023-04-01T05:00:30.001000"
+      required:
+        - datetime

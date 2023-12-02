@@ -198,3 +198,6 @@ logs/
 
 # YOLOの重みデータを除外
 weights/
+
+# OpenAPI自動生成のmain.pyを除外
+roomeye/webserver/api/main.py
