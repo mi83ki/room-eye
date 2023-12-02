@@ -9,8 +9,10 @@ from typing import Callable
 
 from fastapi import FastAPI, Response
 
-from roomeye.common import datadict, logging_manager
+from roomeye.common import logging_manager
 from roomeye.common.singleton import Singleton
+
+from .api.models import SensorInfo
 
 # ロガー
 logger: Logger = logging_manager.get_logger()
@@ -26,9 +28,13 @@ class WebServer(metaclass=Singleton):
         # コールバック関数
         self._notice_passing_sensor: Callable[[bool], None] = notice_passing_sensor
         # FastAPI
-        self._app = FastAPI()
+        self._app = FastAPI(
+            title="room-eye Web API",
+            version="0.0.0",
+            servers=[{"url": "http://localhost:3000/api/v0"}],
+        )
         # APIのURL設定
-        self._app.post("/api/v0/sensors")(self.post_sensors)
+        self._app.post("/sensors", response_model=None)(self.post_sensors)
 
     @property
     def app(self) -> FastAPI:
@@ -40,7 +46,7 @@ class WebServer(metaclass=Singleton):
         return self._app
 
     # @app.post("/api/v0/sensors")
-    async def post_sensors(self, body: datadict.SensorInfo) -> Response:
+    async def post_sensors(self, body: SensorInfo) -> Response:
         """センサ情報登録要求
         curl -i -X POST -H "accept: application/json" -H "Content-Type: application/json" -d "{\"deviceId\":\"sensor15\", \"temperature\":\"25.4\", \"humidity\":\"55.4\", \"co2\":\"553.2\", \"passing\": true}" http://127.0.0.1:8000/api/v0/sensors
         """
