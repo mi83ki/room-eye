@@ -1,0 +1,117 @@
+openapi: 3.0.2
+info:
+  title: Sample API
+  version: 0.0.1
+servers:
+  - url: http://localhost:3000/api/v0
+tags:
+  - name: sensor
+    description: Operations about sensor
+paths:
+  /sensors:
+    post:
+      tags:
+        - sensor
+      operationId: registSensorInfo
+      summary: Resist sensor data
+      description: 複数のセンサー情報を登録します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sensorInfo'
+      responses:
+        '200':
+          description: OK
+  /temperature-records:
+    get:
+      tags:
+        - sensor
+      operationId: getTemperatureRecords
+      summary: Get temperature records
+      description: 温度を取得します
+      parameters:
+        - $ref: '#/components/parameters/queryDevice'
+        - $ref: '#/components/parameters/queryStart'
+        - $ref: '#/components/parameters/queryEnd'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/temperatureRecords'
+components:
+  schemas:
+    sensorInfo:
+      description: センサー情報
+      type: object
+      properties:
+        deviceId:
+          title: デバイスID
+          type: string
+        temperature:
+          title: 温度
+          type: number
+        humidity:
+          title: 湿度
+          type: number
+        co2:
+          title: CO2濃度
+          type: number
+      required:
+        - deviceId
+    temperatureRecord:
+      type: object
+      description: 温度情報
+      properties:
+        deviceId:
+          title: デバイスID
+          type: string
+        temperature:
+          title: 湿度
+          type: number
+        createdAt:
+          title: 登録日時
+          type: string
+          example: '2023-12-06T23:59:59+09:00'
+          format: date-time
+      required:
+        - deviceId
+        - temperature
+        - createdAt
+    temperatureRecords:
+      description: 気温情報リスト
+      type: object
+      properties:
+        temperatureRecords:
+          title: 気温情報リスト
+          type: array
+          items:
+            $ref: '#/components/schemas/temperatureRecord'
+  parameters:
+    queryDevice:
+      name: deviceId
+      in: query
+      description: デバイスID
+      required: false
+      schema:
+        type: string
+    queryStart:
+      name: start
+      in: query
+      description: 開始日時
+      required: false
+      schema:
+        type: string
+        example: '2023-12-06T23:59:59+09:00'
+        format: date-time
+    queryEnd:
+      name: end
+      in: query
+      description: 終了日時
+      required: false
+      schema:
+        type: string
+        example: '2023-12-06T23:59:59+09:00'
+        format: date-time
