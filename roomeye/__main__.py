@@ -28,8 +28,8 @@ class RoomEye:
         self._illumi_controller = IlluminationController()
         self._web_server = WebServer(self._illumi_controller.notice_passing_sensor)
 
-        self._human_detector = HumanDetector()
-        
+        # self._human_detector = HumanDetector()
+
     @property
     def app(self) -> FastAPI:
         """FastAPIのappを取得する

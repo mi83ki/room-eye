@@ -27,10 +27,12 @@ class IlluminationController:
         self._remo = NatureRemoController(NATURE_REMO_TOKEN)
 
     def light_on(self) -> bool:
-        return self._remo.send_on_signal_light(self._ROOM_LIGHT_NAME)
+        return self._remo.send_on_signal(self._ROOM_LIGHT_NAME)
+        # return self._remo.send_on_signal_light(self._ROOM_LIGHT_NAME)
 
     def light_off(self) -> bool:
-        return self._remo.send_off_signal_light(self._ROOM_LIGHT_NAME)
+        return self._remo.send_on_signals(self._ROOM_LIGHT_NAME, 2)
+        # return self._remo.send_off_signal_light(self._ROOM_LIGHT_NAME)
 
     def notice_passing_sensor(self, passing: bool) -> None:
         if passing:

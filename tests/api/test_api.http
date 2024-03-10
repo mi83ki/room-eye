@@ -1,7 +1,16 @@
 # WebAPIテスト
 
 ### sensors POST
-POST http://127.0.0.1:8000/sensors
+POST http://127.0.0.1:8000/api/v0/sensors
+content-type: application/json
+
+{
+  "deviceId": "device01",
+  "passing": true
+}
+
+### sensors POST
+POST http://192.168.1.4:8000/api/v0/sensors
 content-type: application/json
 
 {

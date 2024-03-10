@@ -31,10 +31,9 @@ class WebServer(metaclass=Singleton):
         self._app = FastAPI(
             title="room-eye Web API",
             version="0.0.0",
-            servers=[{"url": "http://localhost:3000/api/v0"}],
         )
         # APIのURL設定
-        self._app.post("/sensors", response_model=None)(self.post_sensors)
+        self._app.post("/api/v0/sensors", response_model=None)(self.post_sensors)
 
     @property
     def app(self) -> FastAPI:
